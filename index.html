@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CountJack – Blackjack Card Counting Trainer</title>
+<meta name="apple-mobile-web-app-title" content="CountJack">
+<meta name="description" content="Learn blackjack card counting with hands-on drills, a hidden running count, and casino tables from Reno to Monte Carlo.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#062821">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+<!-- Standalone storage: when not running inside the native app wrapper, back window.storage with localStorage so progress persists offline. -->
+<script>
+if(!window.storage){
+  window.storage = {
+    get: function(key){
+      try { return Promise.resolve({ value: localStorage.getItem(key) }); }
+      catch(e){ return Promise.resolve({ value: null }); }
+    },
+    set: function(key, value){
+      try { localStorage.setItem(key, value); } catch(e){}
+      return Promise.resolve();
+    }
+  };
+}
+</script>
+<style>
+:root{
+  --felt-deep:#0B3D2E;
+  --felt-shadow:#062821;
+  --felt-light:#134d3a;
+  --brass:#C9A24B;
+  --brass-dim:#8a7238;
+  --ivory:#F1E9D8;
+  --ivory-dim:#c9c0ac;
+  --card-red:#B33A3A;
+  --card-ink:#1B1B1A;
+  --good:#4f9d69;
+  --bad:#B33A3A;
+  --rail-light:#5a3a26;
+  --rail-mid:#3c2416;
+  --rail-dark:#20130b;
+  --display-face: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --body-face: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --mono-face: ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --sep: rgba(201,162,75,0.18);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;}
+button, input{ font: inherit; }
+button{ cursor:pointer; transition: transform 0.12s ease, opacity 0.12s ease; }
+button:active{ transform: scale(0.96); opacity:0.85; }
+html,body{
+  margin:0; padding:0; height:100%;
+  background: var(--felt-shadow);
+  color: var(--ivory);
+  font-family: var(--body-face);
+  overscroll-behavior: none;
+  user-select: none;
+}
+body{
+  background:
+    radial-gradient(ellipse at 50% -10%, var(--felt-light) 0%, var(--felt-deep) 55%, var(--felt-shadow) 100%);
+  min-height: 100dvh;
+  display:flex; flex-direction:column;
+  position:relative;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; opacity:0.4; mix-blend-mode:overlay; z-index:0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+#app{ flex:1; display:flex; flex-direction:column; min-height:0; position:relative; z-index:1; }
+
+/* ---------- header ---------- */
+.topbar{
+  position: sticky; top:0; z-index:15;
+  padding: calc(10px + var(--safe-top)) 16px 10px;
+  display:flex; align-items:center; justify-content:space-between;
+  background: rgba(6,40,33,0.82);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 0.5px solid var(--sep);
+  flex-shrink:0;
+}
+.brand{
+  font-family: var(--display-face);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-size: 17px;
+  color: var(--ivory);
+  display:flex; align-items:center; gap:6px;
+}
+.brand .dot{ color: var(--brass); }
+.bankroll{
+  font-family: var(--mono-face);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight:700;
+  color: var(--brass);
+  background: rgba(201,162,75,0.14);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+.page-title{
+  font-family: var(--display-face);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+  color: var(--ivory);
+  margin: 4px 0 2px;
+}
+.page-subtitle{ color: var(--ivory-dim); font-size:15px; line-height:1.45; margin: 0 0 4px; }
+.topbar-right{ display:flex; align-items:center; gap:8px; }
+.gear-btn{
+  border:none; background: rgba(255,255,255,0.08); color: var(--ivory);
+  width:32px; height:32px; border-radius:50%; font-size:15px;
+  display:flex; align-items:center; justify-content:center;
+}
+.gear-btn svg{ width:17px; height:17px; }
+
+/* ---------- settings ---------- */
+.settings-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 14px 2px; border-bottom: 0.5px solid var(--sep);
+}
+.settings-row:last-of-type{ border-bottom:none; }
+.settings-row .label{ font-size:15px; color: var(--ivory); }
+.settings-row .sublabel{ font-size:12px; color: var(--ivory-dim); margin-top:2px; }
+.pro-free-row{ padding: 12px 2px 16px; border-bottom: 0.5px solid var(--sep); display:flex; flex-direction:column; gap:10px; }
+.pro-active-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 2px; border-bottom: 0.5px solid var(--sep); }
+.pro-active-badge{ color: var(--good); font-weight:700; font-size:13px; }
+.switch{ position:relative; display:inline-block; width:51px; height:31px; flex-shrink:0; }
+.switch input{ opacity:0; width:0; height:0; position:absolute; }
+.switch .track{
+  position:absolute; inset:0; background: rgba(255,255,255,0.22); border-radius:999px; transition:background 0.2s;
+}
+.switch input:checked + .track{ background: var(--good); }
+.switch .thumb{
+  position:absolute; top:2px; left:2px; width:27px; height:27px; background:#fff; border-radius:50%;
+  transition: transform 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.35);
+}
+.switch input:checked ~ .thumb{ transform: translateX(20px); }
+
+/* ---------- screens ---------- */
+.screen{ flex:1; overflow-y:auto; padding: 16px 18px calc(90px + var(--safe-bottom)); display:none; -webkit-overflow-scrolling:touch;}
+.screen.active{ display:block; }
+
+.section-label{
+  font-family: var(--body-face);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ivory-dim);
+  margin: 22px 0 10px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-label::after{ content:''; flex:1; height:1px; background: var(--sep); }
+.section-label:first-child{ margin-top:0; }
+
+p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px 0 0; }
+
+/* ---------- city cards ---------- */
+.city-card{
+  position:relative;
+  border-radius: 16px;
+  background: rgba(8,28,22,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  transition: background 0.15s ease;
+}
+.city-card:active{ background: rgba(8,28,22,0.72); }
+.city-card.locked{ opacity:0.55; }
+.city-card .info h3{ margin:0 0 3px; font-family: var(--display-face); font-weight:700; font-size:17px; color: var(--ivory); }
+.city-card .info .meta{ font-family: var(--mono-face); font-size:12px; color:var(--brass); font-weight:600; }
+.city-card .info .req{ font-size:12px; color: var(--ivory-dim); margin-top:4px; }
+.city-card .go{
+  border:none; background: var(--brass); color:var(--felt-shadow);
+  font-weight:700; font-size:13px; padding:9px 16px; border-radius:999px;
+  font-family: var(--body-face); flex-shrink:0;
+}
+.city-card.locked .go{ background: rgba(201,162,75,0.2); color: rgba(241,233,216,0.45); }
+.lock-badge{ font-size:18px; }
+
+/* ---------- ad banner (free tier) ---------- */
+.ad-banner{
+  border: 1px dashed rgba(241,233,216,0.3); border-radius:14px;
+  padding: 12px 14px; margin-bottom: 14px;
+  background: rgba(0,0,0,0.2);
+  display:flex; flex-direction:column; gap:9px;
+}
+.ad-tag{
+  display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.06em;
+  color: var(--ivory-dim); background: rgba(255,255,255,0.12); border-radius:4px; padding:1px 5px; margin-right:6px;
+}
+.ad-copy{ font-size:12.5px; color: var(--ivory-dim); line-height:1.4; }
+.ad-upgrade-btn{
+  align-self:flex-start; border:none; background: var(--brass); color: var(--felt-shadow);
+  font-weight:700; font-size:12.5px; padding:8px 14px; border-radius:999px; font-family: var(--body-face);
+}
+.pill.locked-pill{ opacity:0.5; }
+
+/* ---------- learn tab ---------- */
+.hilo-table{ width:100%; border-collapse:collapse; margin-top:6px; }
+.hilo-table td{ padding:10px 8px; border-bottom:1px solid rgba(201,162,75,0.15); font-size:14px; }
+.hilo-table .rankcell{ font-family: var(--mono-face); font-size:15px; }
+.chip-val{
+  display:inline-block; min-width:34px; text-align:center; padding:3px 8px; border-radius:7px;
+  font-family: var(--mono-face); font-weight:700; font-size:13px;
+}
+.v-plus{ background: rgba(79,157,105,0.2); color:#8fd6a5; }
+.v-zero{ background: rgba(201,162,75,0.15); color: var(--ivory-dim); }
+.v-minus{ background: rgba(179,58,58,0.2); color:#e79b9b; }
+
+.callout{
+  background: rgba(0,0,0,0.22);
+  border-left: 3px solid var(--brass);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height:1.6;
+  color: var(--ivory-dim);
+  margin-top: 14px;
+}
+.callout b{ color: var(--ivory); }
+
+/* ---------- drill controls (segmented control) ---------- */
+.pill-row{
+  display:flex; gap:2px; margin: 8px 0 4px;
+  background: rgba(0,0,0,0.28); border-radius: 11px; padding: 3px;
+}
+.pill{
+  flex:1; border:none; background:transparent; color: var(--ivory-dim);
+  padding:8px 6px; border-radius: 9px; font-size:13.5px; font-weight:600; font-family:var(--body-face);
+}
+.pill.active{ background: var(--brass); color: var(--felt-shadow); font-weight:700; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+.btn-main{
+  width:100%; border:none; border-radius:14px; padding:15px; font-size:16.5px; font-weight:700;
+  background: var(--brass); color: var(--felt-shadow); font-family: var(--body-face); margin-top:16px;
+  min-height:50px; box-shadow: 0 2px 10px rgba(201,162,75,0.25);
+}
+.btn-main:disabled{ opacity:0.35; box-shadow:none; }
+.btn-ghost{
+  width:100%; border: none; border-radius:14px; padding:13px; font-size:15px; font-weight:600;
+  background: rgba(255,255,255,0.08); color: var(--ivory); font-family: var(--body-face); margin-top:10px;
+  min-height:48px;
+}
+
+/* ---------- table felt (play/drill) ---------- */
+.table-wrap{ display:flex; flex-direction:column; height:100%; }
+.felt{
+  flex:1; border-radius: 20px 20px 46% 46% / 20px 20px 15% 15%; margin-top:10px;
+  background: radial-gradient(ellipse at 50% 20%, var(--felt-light), var(--felt-deep) 70%);
+  border: 6px solid var(--felt-shadow);
+  border-bottom-width: 16px;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.55), inset 0 40px 60px -30px rgba(0,0,0,0.4);
+  padding: 16px; display:flex; flex-direction:column; min-height: 440px;
+  position:relative; overflow:hidden;
+}
+.felt::before{
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:0.5; mix-blend-mode:overlay; z-index:0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+.felt::after{
+  content:''; position:absolute; left:-6px; right:-6px; bottom:-16px; height:64px; pointer-events:none; z-index:0;
+  border-radius: 0 0 46% 46% / 0 0 60% 60%;
+  background: linear-gradient(to bottom, var(--rail-light), var(--rail-mid) 55%, var(--rail-dark));
+  box-shadow: inset 0 3px 0 rgba(255,255,255,0.08), inset 0 -8px 16px rgba(0,0,0,0.5), 0 -1px 0 var(--brass-dim);
+  border-top: 2px solid rgba(201,162,75,0.55);
+}
+.felt > *{ position:relative; z-index:1; }
+.hand-row{ display:flex; flex-direction:column; align-items:center; gap:6px; margin: 6px 0; }
+.player-hands-wrap{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:center; gap:6px 14px; }
+.player-hands-wrap .hand-row{ padding:6px 8px; border-radius:12px; transition: background 0.2s, box-shadow 0.2s; }
+.player-hands-wrap .hand-row.active-hand{
+  background: rgba(201,162,75,0.12);
+  box-shadow: 0 0 0 1.5px rgba(201,162,75,0.6);
+}
+.action-row button#splitBtn{ font-size:13px; }
+.hand-label{ font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color: var(--ivory-dim); font-family: var(--display-face); }
+.cards{ display:flex; gap:-8px; min-height:112px; }
+.card{
+  width:72px; height:104px; background:#fdfcf7; border-radius:9px; margin-left:-22px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+  display:flex; flex-direction:column; justify-content:space-between; padding:6px 7px;
+  font-family: var(--mono-face); font-weight:700; font-size:19px; color: var(--card-ink);
+  animation: dealIn 0.28s ease-out;
+  flex-shrink:0;
+}
+.card:first-child{ margin-left:0; }
+.card.red{ color: var(--card-red); }
+.card.back{
+  background: repeating-linear-gradient(45deg, var(--felt-deep), var(--felt-deep) 4px, var(--brass-dim) 4px, var(--brass-dim) 8px);
+  border: 2px solid var(--brass-dim);
+}
+.card .corner{ line-height:1; }
+.card .corner.bottom{ align-self:flex-end; transform: rotate(180deg); }
+@keyframes dealIn{ from{ opacity:0; transform: translateY(-14px) scale(0.9);} to{ opacity:1; transform:none; } }
+
+.hand-total{ font-family: var(--mono-face); font-variant-numeric: tabular-nums; font-size:14.5px; font-weight:600; color: var(--brass); min-height:16px; }
+
+.center-msg{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-family: var(--display-face); font-size: 22px; color: var(--ivory); text-align:center;
+  background: rgba(6,40,33,0.85); padding: 10px 20px; border-radius:10px; border:1px solid rgba(201,162,75,0.4);
+  pointer-events:none; opacity:0; transition: opacity 0.2s;
+}
+.center-msg.show{ opacity:1; }
+
+.shoe-info{
+  position:absolute; top:10px; right:14px; z-index:2;
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+}
+.shoe-meta{ font-family: var(--mono-face); font-variant-numeric: tabular-nums; font-size:10.5px; color: var(--ivory-dim); text-align:right; }
+.shoe-gauge{
+  position:relative; width:17px; height:60px;
+  border:1.3px solid rgba(201,162,75,0.55); border-radius:3px;
+  background: rgba(0,0,0,0.35); overflow:hidden;
+}
+.shoe-gauge-fill{
+  position:absolute; left:0; right:0; bottom:0; height:100%;
+  background: linear-gradient(to top, var(--brass), rgba(230,196,105,0.65));
+  transition: height 0.5s ease;
+}
+.shoe-gauge-ticks{ position:absolute; inset:0; pointer-events:none; }
+.shoe-gauge-ticks div{ position:absolute; left:0; right:0; height:1px; background: rgba(6,40,33,0.55); }
+.shoe-gauge.shuffling{ animation: shoeShuffle 0.6s ease; }
+.shoe-gauge.shuffling .shoe-gauge-fill{ transition: height 0.35s ease; }
+@keyframes shoeShuffle{
+  0%,100%{ transform: translateX(0); }
+  20%{ transform: translateX(-2px) rotate(-2deg); }
+  40%{ transform: translateX(2px) rotate(2deg); }
+  60%{ transform: translateX(-2px) rotate(-1deg); }
+  80%{ transform: translateX(2px) rotate(1deg); }
+}
+.shuffle-banner{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-family: var(--body-face); font-weight:700; font-size:13px; color: var(--felt-shadow);
+  background: var(--brass); padding: 8px 16px; border-radius:999px;
+  opacity:0; pointer-events:none; transition: opacity 0.25s ease; z-index:5;
+  display:flex; align-items:center; gap:6px;
+}
+.shuffle-banner.show{ opacity:1; }
+
+/* ---------- multi-player drill layout ---------- */
+.td-dealer-row{ display:flex; flex-direction:column; align-items:center; gap:4px; margin-bottom:10px; }
+.td-players-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px 8px; }
+.td-hand{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:70px; }
+.td-hand .seat-label{ font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color: var(--ivory-dim); font-weight:600; }
+.card.mini{ width:34px; height:50px; padding:3px 4px; font-size:10px; margin-left:-12px; }
+.card.mini:first-child{ margin-left:0; }
+.td-hand .hand-total{ font-size:11.5px; }
+
+/* ---------- check count button ---------- */
+.check-btn{
+  position:absolute; top:10px; left:14px;
+  display:flex; align-items:center; gap:5px;
+  background: rgba(0,0,0,0.35); border:1px solid var(--brass); color: var(--brass);
+  border-radius: 999px; padding: 7px 12px; font-size:12px; font-family: var(--body-face); font-weight:600;
+}
+.check-btn svg{ width:14px; height:14px; flex-shrink:0; }
+
+/* ---------- betting / actions ---------- */
+.controls{
+  padding: 14px 12px calc(4px + var(--safe-bottom)); flex-shrink:0; margin-top:-2px;
+  background: linear-gradient(to bottom, var(--rail-mid), var(--rail-dark));
+  border-radius: 0 0 18px 18px;
+  box-shadow: inset 0 2px 0 rgba(201,162,75,0.4), inset 0 10px 20px -12px rgba(0,0,0,0.6);
+}
+.chip-row{ display:flex; gap:10px; justify-content:center; margin: 6px 0 12px; }
+.chip{
+  width:54px; height:54px; border-radius:50%; position:relative;
+  display:flex; align-items:center; justify-content:center; font-family: var(--mono-face); font-variant-numeric: tabular-nums; font-weight:800; font-size:13px;
+  color:#fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.34), rgba(255,255,255,0) 46%), var(--chip, #b23a3a);
+  border: 3px dashed rgba(255,255,255,0.85);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 -4px 7px rgba(0,0,0,0.4);
+}
+.chip span{ position:relative; z-index:1; }
+.chip:active{ transform: scale(0.94); }
+.action-row{ display:flex; gap:8px; }
+.action-row button{
+  flex:1; border:none; border-radius:14px; padding:14px 6px; font-size:15px; font-weight:700;
+  background: rgba(241,233,216,0.92); color: var(--felt-shadow); font-family: var(--body-face);
+  min-height:50px;
+}
+.action-row button:disabled{ opacity:0.3; }
+.action-row button.stand{ background: var(--card-red); color: var(--ivory); }
+.action-row button.deal{ background: var(--brass); color: var(--felt-shadow); }
+.action-row button.ghost{ background: rgba(255,255,255,0.08); color: var(--ivory); }
+
+/* ---------- bet zone (overlay on felt) ---------- */
+.bet-zone{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; width:100%; padding:0 16px; z-index:3; pointer-events:none;
+}
+.bet-zone > *{ pointer-events:auto; }
+.bet-placeholder{
+  font-family: var(--display-face); font-weight:800; font-size:26px; color:rgba(241,233,216,0.92);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.55); letter-spacing:0.01em; text-align:center;
+}
+.bet-active{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+.bet-chip-icon{
+  width:66px; height:66px; border-radius:50%; position:relative;
+  display:flex; align-items:center; justify-content:center; font-family: var(--mono-face); font-weight:800; font-size:22px;
+  color:#fff; text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.3), rgba(255,255,255,0) 48%), var(--chip, #b8902f);
+  border: 3px dashed rgba(255,255,255,0.9);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.55), 0 0 0 10px rgba(255,255,255,0.05), inset 0 -4px 8px rgba(0,0,0,0.35);
+}
+.bet-total-amount{
+  font-family: var(--mono-face); font-variant-numeric: tabular-nums; font-weight:800; font-size:30px;
+  color:#fff; text-shadow: 0 2px 10px rgba(0,0,0,0.55);
+}
+.bet-zone-actions{ display:flex; align-items:flex-start; gap:18px; margin-top:2px; }
+.bz-btn{
+  display:flex; flex-direction:column; align-items:center; gap:6px; background:none; border:none; padding:0;
+  color: var(--ivory); font-family: var(--body-face); font-weight:700; font-size:12px;
+}
+.bz-btn .bz-icon{
+  width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.bz-btn .bz-icon svg{ width:26px; height:26px; }
+.bz-clear .bz-icon{ background: linear-gradient(160deg, #d15656, #8f2626); }
+.bz-deal .bz-icon{ background: linear-gradient(160deg, #5bbf5f, #2c7a30); }
+.bz-auto{ font-size:10.5px; }
+.bz-auto .bz-icon{ width:40px; height:40px; border-radius:11px; background: linear-gradient(160deg, #5bbf5f, #2c7a30); margin-top:16px; }
+.bz-auto .bz-icon svg{ width:18px; height:18px; }
+.bz-auto.active .bz-icon{ box-shadow: 0 0 0 2px var(--brass), 0 3px 10px rgba(0,0,0,0.45); }
+.bz-btn:disabled{ opacity:0.35; }
+.bz-btn:active .bz-icon{ transform: scale(0.94); }
+
+/* ---------- stats ---------- */
+.stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+.stat-box{
+  background: rgba(8,28,22,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-radius:14px; padding:14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.stat-box .num{ font-family: var(--mono-face); font-variant-numeric: tabular-nums; font-weight:700; font-size:27px; color: var(--brass); }
+.stat-box .lbl{ font-size:11.5px; color: var(--ivory-dim); text-transform:uppercase; letter-spacing:0.08em; margin-top:2px; }
+
+/* ---------- tab bar ---------- */
+.tabbar{
+  position:fixed; bottom:0; left:0; right:0;
+  display:flex; background: rgba(6,40,33,0.9); backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-top: 0.5px solid var(--sep);
+  padding-bottom: var(--safe-bottom);
+  z-index: 20;
+}
+.tab{
+  flex:1; border:none; background:transparent; color: var(--ivory-dim); font-family: var(--body-face);
+  padding: 9px 4px 6px; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; font-weight:600;
+}
+.tab:active{ transform:none; opacity:0.6; }
+.tab .ic{ width:23px; height:23px; display:block; }
+.tab .ic svg{ width:100%; height:100%; display:block; }
+.tab.active{ color: var(--brass); }
+
+/* ---------- modal (native bottom sheet) ---------- */
+.modal-veil{
+  position:fixed; inset:0; background: rgba(0,0,0,0.4); display:flex; align-items:flex-end; justify-content:center;
+  z-index:50; opacity:0; pointer-events:none; transition: opacity 0.25s ease;
+}
+.modal-veil.show{ opacity:1; pointer-events:auto; }
+.modal{
+  background: linear-gradient(160deg, #0f5540, var(--felt-shadow));
+  border-radius: 20px 20px 0 0; padding: 10px 20px calc(24px + var(--safe-bottom));
+  width:100%; max-width:520px;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+  transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  max-height: 88vh; overflow-y:auto;
+}
+.modal-veil.show .modal{ transform: translateY(0); }
+.modal::before{
+  content:''; display:block; width:36px; height:5px; border-radius:3px;
+  background: rgba(241,233,216,0.3); margin: 6px auto 14px;
+}
+.modal h3{ font-family: var(--display-face); font-weight:800; color: var(--ivory); margin:0 0 4px; font-size:21px; }
+.modal p{ color: var(--ivory-dim); font-size:13.5px; margin:0 0 14px; line-height:1.5; }
+.modal input{
+  width:100%; padding:13px; font-size:20px; text-align:center; border-radius:12px; border:none;
+  background: rgba(0,0,0,0.3); color: var(--ivory); font-family: var(--mono-face); margin-bottom:10px;
+}
+.modal .row2{ display:flex; gap:8px; }
+.modal .row2 > div{ flex:1; }
+.modal .fieldlabel{ font-size:11px; color: var(--ivory-dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.08em; }
+.result-box{ text-align:center; padding: 14px 8px; border-radius:10px; margin-bottom:12px; }
+.result-box.correct{ background: rgba(79,157,105,0.18); border:1px solid var(--good); }
+.result-box.wrong{ background: rgba(179,58,58,0.18); border:1px solid var(--bad); }
+.result-box .odometer{ font-family: var(--mono-face); font-variant-numeric: tabular-nums; font-weight:700; font-size: 36px; letter-spacing:0; color: var(--ivory); margin: 6px 0; }
+.result-box .odosub{ font-size:12px; color: var(--ivory-dim); }
+.result-box .verdict{ font-size:14px; font-weight:700; }
+.result-box.correct .verdict{ color:#8fd6a5; }
+.result-box.wrong .verdict{ color:#e79b9b; }
+
+.progressbar{ height:6px; border-radius:4px; background: rgba(0,0,0,0.3); overflow:hidden; margin-top:8px; }
+.progressbar > div{ height:100%; background: var(--brass); }
+
+::-webkit-scrollbar{ display:none; }
+
+/* ============================================================
+   Falcon Apple-feel pass — premium buttons, menus & chrome
+   (orange accent, soft shadows, springy press, frosted glass)
+   ============================================================ */
+:root{
+  --fx-accent:#b8934e; --fx-accent2:#9c7c3e; --fx-accent-rgb:184,147,78;
+  --fx-gold-grad: linear-gradient(180deg, #c2a25a, #a07f3c);
+  --fx-ease:cubic-bezier(.32,.72,0,1);
+  --fx-panel:#1e2327; --fx-panel2:#2a3136; --fx-line:#363d42;
+  --fx-text:#f2f4f5; --fx-muted:#9aa2a7;
+  --fx-glass:rgba(20,24,27,.72);
+}
+
+/* springy, tactile press on every control */
+button{ transition: transform .18s var(--fx-ease), background .18s var(--fx-ease), border-color .18s var(--fx-ease), box-shadow .18s var(--fx-ease), color .12s var(--fx-ease); }
+button:active{ transform: scale(.975); opacity:1; }
+button:focus-visible, input:focus-visible{ outline:none; box-shadow: 0 0 0 3px rgba(var(--fx-accent-rgb),.32); }
+
+/* frosted neutral chrome (topbar + tab bar) */
+.topbar{
+  background: rgba(20,24,27,.7);
+  -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.tabbar{
+  background: var(--fx-glass);
+  -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px);
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.tab.active{ color: var(--fx-accent); }
+
+/* primary / secondary app buttons */
+.btn-main{
+  background: var(--fx-gold-grad); color:#241a08; border-radius:12px; font-weight:700;
+  box-shadow: 0 6px 16px rgba(0,0,0,.34);
+}
+.btn-main:active{ background: linear-gradient(180deg, #b2914a, #8f7134); }
+.btn-main:disabled{ opacity:.5; box-shadow:none; }
+.btn-ghost{
+  background: rgba(255,255,255,.06); color: var(--ivory);
+  border: 1px solid rgba(255,255,255,.14); border-radius:12px; font-weight:600;
+}
+.btn-ghost:active{ background: rgba(var(--fx-accent-rgb),.14); border-color: rgba(var(--fx-accent-rgb),.42); }
+
+/* home "Play" buttons + upgrade CTA share the brand accent */
+.city-card .go{ background: var(--fx-gold-grad); color:#241a08; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.city-card.locked .go{ background: rgba(255,255,255,.08); color: rgba(241,233,216,.45); box-shadow:none; }
+.ad-upgrade-btn{ background: var(--fx-gold-grad); color:#241a08; }
+
+/* iOS-style segmented controls (Drill mode / decks / speed) */
+.pill-row{ background: var(--fx-panel2); border:1px solid var(--fx-line); border-radius:12px; padding:3px; gap:4px; }
+.pill{ border-radius:9px; font-weight:600; }
+.pill.active{ background: var(--fx-accent); color:#fff; font-weight:700; box-shadow: 0 1px 3px rgba(0,0,0,.28); }
+
+/* game & bet action buttons — clean, color-cued, springy */
+.action-row{ gap:10px; }
+.action-row button{
+  flex:1; border:1px solid transparent; border-radius:13px; min-height:56px; padding:14px 6px;
+  font-family: var(--body-face); font-weight:700; font-size:16px; color:#fff; letter-spacing:.01em;
+  background: linear-gradient(180deg, #333b42, #262c31);
+  box-shadow: 0 2px 0 rgba(0,0,0,.28), 0 8px 20px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.16);
+}
+.action-row button:active{ transform: translateY(1px) scale(.99); box-shadow: 0 1px 0 rgba(0,0,0,.28), 0 4px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.16); }
+.action-row button:disabled{ opacity:.32; }
+#hitBtn{ background: linear-gradient(180deg, #4a7d57, #35603f); }
+#standBtn{ background: linear-gradient(180deg, #9e4a48, #7a3434); color:#fff; }
+#doubleBtn{ background: var(--fx-gold-grad); color:#241a08; }
+#splitBtn{ background: linear-gradient(180deg, #4a6d94, #35507a); }
+#betDealBtn{ background: var(--fx-gold-grad); color:#241a08; box-shadow: 0 2px 0 rgba(0,0,0,.2), 0 8px 20px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.22); }
+#betDealBtn:disabled{ box-shadow:none; }
+#betClearBtn, #betAutoBtn{ background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.14); color: var(--ivory); box-shadow:none; }
+#betAutoBtn{ flex:.62; }
+#betAutoBtn.active{ background: rgba(var(--fx-accent-rgb),.18); border-color: var(--fx-accent); color: var(--fx-accent); }
+
+/* bet spot sits lower (in front of the player), clear of the felt crest */
+.bet-zone{ top:60%; }
+
+/* keep the dealer row clear of the top shoe-info / Check Count controls */
+#playFelt > .hand-row{ margin-top: 34px; }
+.felt{ overflow:hidden; }
+
+/* menus / sheets — Falcon charcoal panel, Apple pop */
+.modal-veil{ background: rgba(0,0,0,.45); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.modal{
+  background: linear-gradient(180deg, var(--fx-panel), #14181b);
+  border: 1px solid var(--fx-line); border-bottom:none;
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.55);
+}
+.modal h3{ letter-spacing:-.02em; }
+.modal input{ background: var(--fx-panel2); border:1px solid var(--fx-line); border-radius:12px; color: var(--fx-text); }
+.settings-row, .pro-free-row, .pro-active-row{ border-color: rgba(255,255,255,.08); }
+.switch input:checked + .track{ background:#34c759; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="dot">♠</span> CountJack</div>
+    <div class="topbar-right">
+      <div class="bankroll" id="bankrollDisplay">$1,000</div>
+      <button class="gear-btn" id="settingsBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8M18.7 18.7l-1.8-1.8M7.1 7.1 5.3 5.3"/></svg></button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="page-title">Tables</div>
+    <p class="page-subtitle">Every city runs its own shoe. Grow your bankroll to unlock higher-stakes tables.</p>
+
+    <div class="ad-banner" id="adBanner" style="display:none;">
+      <div class="ad-copy"><span class="ad-tag">Ad</span> CountJack Free shows a placeholder ad here between hands.</div>
+      <button class="ad-upgrade-btn" id="adUpgradeBtn">Remove Ads</button>
+    </div>
+
+    <div class="section-label">Daily bonus</div>
+    <div class="city-card" id="bonusCard">
+      <div class="info">
+        <h3 id="bonusTitle">🎁 Get Chips</h3>
+        <div class="meta">One hand, one decision — win 500 chips</div>
+        <div class="req" id="bonusReq">Hit, stand, double, or fold — call it right and the house pays you 500 chips.</div>
+      </div>
+      <button class="go" id="bonusBtn">Play</button>
+    </div>
+
+    <div class="section-label">Choose a table</div>
+    <div id="cityList" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- LEARN -->
+  <div class="screen" id="screen-learn">
+    <div class="page-title">Learn</div>
+    <p class="page-subtitle">The Hi-Lo counting system, in two minutes.</p>
+    <div class="section-label">The Hi-Lo system</div>
+    <p class="lede">Every card you see is worth +1, 0, or −1. Keep a running total in your head as the shoe empties — that's your <b style="color:var(--ivory)">running count</b>.</p>
+    <table class="hilo-table">
+      <tr><td class="rankcell">2 · 3 · 4 · 5 · 6</td><td style="text-align:right"><span class="chip-val v-plus">+1</span></td></tr>
+      <tr><td class="rankcell">7 · 8 · 9</td><td style="text-align:right"><span class="chip-val v-zero">0</span></td></tr>
+      <tr><td class="rankcell">10 · J · Q · K · A</td><td style="text-align:right"><span class="chip-val v-minus">−1</span></td></tr>
+    </table>
+    <div class="callout">
+      <b>Running count</b> is the raw sum of every card seen since the last shuffle.<br><br>
+      <b>True count</b> = running count ÷ decks remaining. With more than one deck in play, the true count is what actually tells you the odds — a +6 running count means very little in an 8-deck shoe, but a lot in a single deck.
+    </div>
+    <div class="section-label">Why hide it?</div>
+    <p class="lede">A real table never shows you the count. CountJack hides it too — tap <b style="color:var(--brass)">Check Count</b> whenever you want to test yourself. Guess first, then see how close you were.</p>
+  </div>
+
+  <!-- DRILL -->
+  <div class="screen" id="screen-drill">
+    <div id="drillSetup">
+      <div class="page-title">Drill</div>
+      <p class="page-subtitle">Pure counting reps — no bets on the line.</p>
+      <div class="section-label">Deal style</div>
+      <p class="lede">Watch one card at a time, or a full table — just like it plays for real.</p>
+      <div class="pill-row" id="drillMode"></div>
+      <div class="section-label">Shoe &amp; pace</div>
+      <div class="pill-row" id="drillDecks"></div>
+      <div class="pill-row" id="drillSpeed"></div>
+      <button class="btn-main" id="drillStartBtn">Start drill</button>
+    </div>
+
+    <div class="table-wrap" id="drillTableWrap" style="display:none;">
+      <div class="felt" id="drillFelt">
+        <div class="shoe-info">
+          <div class="shoe-meta" id="drillShoeMeta">1 deck</div>
+          <div class="shoe-gauge" id="drillShoeGauge"><div class="shoe-gauge-ticks" id="drillShoeGaugeTicks"></div><div class="shoe-gauge-fill" id="drillShoeGaugeFill"></div></div>
+        </div>
+        <button class="check-btn" id="drillCheckBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></svg> Check Count</button>
+        <div id="drillContent" style="flex:1; display:flex; flex-direction:column; justify-content:center;"></div>
+        <div class="center-msg" id="drillMsg"></div>
+        <div class="shuffle-banner" id="drillShuffleBanner">🔀 Shuffling shoe…</div>
+      </div>
+      <button class="btn-ghost" id="drillStopBtn">End drill session</button>
+    </div>
+  </div>
+
+
+  <!-- PLAY -->
+  <div class="screen" id="screen-play">
+    <div class="table-wrap">
+      <div class="felt" id="playFelt">
+        <div class="shoe-info">
+          <div class="shoe-meta" id="playShoeMeta">—</div>
+          <div class="shoe-gauge" id="playShoeGauge"><div class="shoe-gauge-ticks" id="playShoeGaugeTicks"></div><div class="shoe-gauge-fill" id="playShoeGaugeFill"></div></div>
+        </div>
+        <button class="check-btn" id="playCheckBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></svg> Check Count</button>
+        <div class="hand-row">
+          <div class="hand-label">Dealer</div>
+          <div class="cards" id="dealerCards"></div>
+          <div class="hand-total" id="dealerTotal"></div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="player-hands-wrap" id="playerHandsWrap"></div>
+        <div class="bet-zone" id="betZone">
+          <div class="bet-placeholder" id="betPlaceholder">Place Your Bet</div>
+          <div class="bet-active" id="betActive" style="display:none;">
+            <div class="bet-chip-icon">♠</div>
+            <div class="bet-total-amount" id="betTotalAmount">0</div>
+          </div>
+        </div>
+        <div class="center-msg" id="playMsg"></div>
+        <div class="shuffle-banner" id="playShuffleBanner">🔀 Shuffling shoe…</div>
+      </div>
+
+      <div class="controls">
+        <div class="chip-row" id="chipRow"></div>
+        <div class="action-row bet-actions" id="betActionsRow">
+          <button class="act act-ghost" id="betClearBtn">Clear</button>
+          <button class="act act-primary" id="betDealBtn">Deal</button>
+          <button class="act act-ghost act-auto" id="betAutoBtn">Auto</button>
+        </div>
+        <div class="action-row" id="playActionRow" style="display:none;">
+          <button class="act act-hit" id="hitBtn">Hit</button>
+          <button class="act act-stand stand" id="standBtn">Stand</button>
+          <button class="act act-double" id="doubleBtn">Double</button>
+          <button class="act act-split" id="splitBtn" style="display:none;">Split</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="screen" id="screen-stats">
+    <div class="page-title">Stats</div>
+    <p class="page-subtitle">Your counting track record.</p>
+    <div class="section-label">Your progress</div>
+    <div class="stat-grid">
+      <div class="stat-box"><div class="num" id="statHands">0</div><div class="lbl">Hands played</div></div>
+      <div class="stat-box"><div class="num" id="statAccuracy">—</div><div class="lbl">Count accuracy</div></div>
+      <div class="stat-box"><div class="num" id="statChecks">0</div><div class="lbl">Times checked</div></div>
+      <div class="stat-box"><div class="num" id="statBest">0</div><div class="lbl">Best correct streak</div></div>
+    </div>
+    <div class="section-label">Bankroll</div>
+    <p class="lede" id="statBankrollLine">Starting bankroll: $1,000</p>
+    <button class="btn-ghost" id="resetBtn">Reset progress</button>
+  </div>
+
+</div>
+
+<div class="tabbar">
+  <button class="tab active" data-screen="home">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.2 12 4l8 7.2"/><path d="M6 9.8V19a1 1 0 0 0 1 1h3.2v-5.6h3.6V20H17a1 1 0 0 0 1-1V9.8"/></svg></span>
+    Tables
+  </button>
+  <button class="tab" data-screen="learn">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c-1.6-1.1-3.9-1.6-6.2-1.6v13.4c2.3 0 4.6.5 6.2 1.6"/><path d="M12 6.2c1.6-1.1 3.9-1.6 6.2-1.6v13.4c-2.3 0-4.6.5-6.2 1.6"/><path d="M12 6.2v13.4"/></svg></span>
+    Learn
+  </button>
+  <button class="tab" data-screen="drill">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13.2 2.2 4.6 13.4a.9.9 0 0 0 .7 1.4h4.9l-1.2 7a.9.9 0 0 0 1.6.7l8.6-11.2a.9.9 0 0 0-.7-1.4h-4.9l1.2-7a.9.9 0 0 0-1.6-.7Z"/></svg></span>
+    Drill
+  </button>
+  <button class="tab" data-screen="play">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.2" y="3.2" width="15.6" height="17.6" rx="2.6"/><path d="M12 8c-1.9 2.1-3.4 3.6-3.4 5.5A3.4 3.4 0 0 0 12 16.9a3.4 3.4 0 0 0 3.4-3.4C15.4 11.6 13.9 10.1 12 8Z" fill="currentColor" stroke="none"/><path d="M12 16.9v2.3"/></svg></span>
+    Play
+  </button>
+  <button class="tab" data-screen="stats">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19v-8.5"/><path d="M12 19V6"/><path d="M19 19v-5.5"/></svg></span>
+    Stats
+  </button>
+</div>
+
+<!-- Check count modal -->
+<div class="modal-veil" id="checkModal">
+  <div class="modal">
+    <div id="checkStep1">
+      <h3>What's your count?</h3>
+      <p id="checkPrompt">Enter the running count you've kept since the last shuffle.</p>
+      <div class="fieldlabel">Running count</div>
+      <input type="number" id="guessRunning" placeholder="e.g. 4" inputmode="numeric">
+      <div id="trueCountField" style="display:none;">
+        <div class="fieldlabel">True count (running ÷ decks left)</div>
+        <input type="number" id="guessTrue" placeholder="e.g. 1.5" inputmode="decimal" step="0.5">
+      </div>
+      <button class="btn-main" id="submitGuessBtn">Reveal</button>
+      <button class="btn-ghost" id="skipGuessBtn">Just show me</button>
+    </div>
+    <div id="checkStep2" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Daily chip quiz modal -->
+<div class="modal-veil" id="chipModal">
+  <div class="modal">
+    <div id="chipStep1">
+      <h3>Get Chips</h3>
+      <p>One hand, decided before you'd draw a third card. Simplified basic strategy — no splitting today.</p>
+      <div class="hand-row" style="margin: 4px 0 14px;">
+        <div class="hand-label">Dealer shows</div>
+        <div class="cards" id="chipDealerCards"></div>
+      </div>
+      <div class="hand-row" style="margin-bottom:6px;">
+        <div class="hand-label">Your hand</div>
+        <div class="cards" id="chipPlayerCards"></div>
+        <div class="hand-total" id="chipPlayerTotal"></div>
+      </div>
+      <div class="action-row" style="margin-top:16px;">
+        <button id="chipHitBtn">Hit</button>
+        <button id="chipStandBtn" class="stand">Stand</button>
+      </div>
+      <div class="action-row" style="margin-top:8px;">
+        <button id="chipDoubleBtn">Double</button>
+        <button id="chipFoldBtn">Fold</button>
+      </div>
+    </div>
+    <div id="chipStep2" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Settings sheet -->
+<div class="modal-veil" id="settingsModal">
+  <div class="modal">
+    <h3>Settings</h3>
+    <p>Personalize how the tables sound and play.</p>
+    <div id="proSection"></div>
+    <div class="settings-row">
+      <div>
+        <div class="label">Sound effects</div>
+        <div class="sublabel">Card deals and flips</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="soundToggle" checked>
+        <span class="track"></span>
+        <span class="thumb"></span>
+      </label>
+    </div>
+    <button class="btn-main" id="closeSettingsBtn">Done</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ---------------- audio ----------------
+let audioCtx = null;
+function ensureAudioCtx(){
+  if(!audioCtx){
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+document.addEventListener('touchstart', ensureAudioCtx, {once:true, passive:true});
+document.addEventListener('click', ensureAudioCtx, {once:true});
+
+function playCardSound(){
+  if(!progress.soundEnabled) return;
+  const ctx = ensureAudioCtx();
+  if(!ctx) return;
+  const now = ctx.currentTime;
+  const dur = 0.07;
+  const bufferSize = Math.floor(ctx.sampleRate * dur);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){
+    data[i] = (Math.random()*2-1) * Math.pow(1 - i/bufferSize, 2.2);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(1800, now);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.32, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  noise.connect(filter).connect(gain).connect(ctx.destination);
+  noise.start(now);
+  noise.stop(now + dur + 0.02);
+}
+function playChipSound(){
+  if(!progress.soundEnabled) return;
+  const ctx = ensureAudioCtx();
+  if(!ctx) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(900, now);
+  osc.frequency.exponentialRampToValueAtTime(500, now+0.08);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.12, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now+0.1);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now+0.12);
+}
+
+// ---------------- persistent state ----------------
+const DEFAULT_STATE = {
+  bankroll: 1000,
+  handsByCity: {},
+  totalChecks: 0,
+  correctChecks: 0,
+  currentStreak: 0,
+  bestStreak: 0,
+  unlocked: { reno:true, ac:false, vegas:false, macau:false, monte:false },
+  dailyBonus: { lastAttemptDate: null, lastResult: null },
+  soundEnabled: true,
+  isPro: false
+};
+let progress = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+async function loadProgress(){
+  try{
+    const res = await window.storage.get('countHouseProgress');
+    if(res && res.value){
+      const saved = JSON.parse(res.value);
+      progress = Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)), saved);
+    }
+  }catch(e){ /* no saved progress yet */ }
+  // Hosted PWA build ships as a paid customer: always Pro (no ads, Stats + full drills unlocked).
+  progress.isPro = true;
+  renderAll();
+}
+async function saveProgress(){
+  try{ await window.storage.set('countHouseProgress', JSON.stringify(progress)); }catch(e){ /* ignore */ }
+}
+
+// ---------------- cities ----------------
+const CITIES = [
+  { id:'reno',   name:'Reno',           tag:'Biggest little shoe',  decks:1, minBet:50,    unlockBankroll:1000,
+    felt:{light:'#7a2c3f', deep:'#4a1526', shadow:'#280a15'}, accent:'#e0a464' },
+  { id:'ac',     name:'Atlantic City',  tag:'Boardwalk double deck',decks:2, minBet:250,   unlockBankroll:5000,
+    felt:{light:'#0f5566', deep:'#093846', shadow:'#04222b'}, accent:'#8fd8d0' },
+  { id:'vegas',  name:'Las Vegas',      tag:'The strip, six decks', decks:6, minBet:1000,  unlockBankroll:20000,
+    felt:{light:'#134d3a', deep:'#0B3D2E', shadow:'#062821'}, accent:'#C9A24B' },
+  { id:'macau',  name:'Macau',          tag:'Eight-deck marathon',  decks:8, minBet:5000,  unlockBankroll:100000,
+    felt:{light:'#7a1420', deep:'#4a0d14', shadow:'#2a060b'}, accent:'#e6c15a' },
+  { id:'monte',  name:'Monte Carlo',    tag:'High-roller room',     decks:6, minBet:10000, unlockBankroll:200000,
+    felt:{light:'#332a5c', deep:'#1c1636', shadow:'#100c20'}, accent:'#d9d3e8' },
+];
+function cityById(id){ return CITIES.find(c=>c.id===id); }
+
+// ---------------- card / shoe engine ----------------
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SUITS = [{s:'♠',red:false},{s:'♣',red:false},{s:'♥',red:true},{s:'♦',red:true}];
+
+function buildShoe(numDecks){
+  const shoe = [];
+  for(let d=0; d<numDecks; d++){
+    for(const r of RANKS){
+      for(const su of SUITS){ shoe.push({rank:r, suit:su.s, red:su.red}); }
+    }
+  }
+  // fisher-yates
+  for(let i=shoe.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [shoe[i],shoe[j]]=[shoe[j],shoe[i]];
+  }
+  return shoe;
+}
+function hiloValue(rank){
+  if(['2','3','4','5','6'].includes(rank)) return 1;
+  if(['10','J','Q','K','A'].includes(rank)) return -1;
+  return 0;
+}
+function handValue(cards){
+  let total=0, aces=0;
+  for(const c of cards){
+    if(['J','Q','K'].includes(c.rank)) total+=10;
+    else if(c.rank==='A'){ total+=11; aces++; }
+    else total+=parseInt(c.rank,10);
+  }
+  while(total>21 && aces>0){ total-=10; aces--; }
+  return {total, soft: aces>0 && total<=21};
+}
+
+// ---------------- simplified basic strategy (for the daily chip quiz) ----------------
+function rankNum(rank){
+  if(rank==='A') return 11;
+  if(['J','Q','K'].includes(rank)) return 10;
+  return parseInt(rank,10);
+}
+// Assumes dealer stands on all 17s. No splitting — pairs are scored as hard/soft totals.
+function bestAction(playerCards, dealerCard){
+  const pv = handValue(playerCards);
+  const d = rankNum(dealerCard.rank); // 2-11 (11 = Ace)
+  if(pv.soft){
+    const t = pv.total;
+    if(t<=14) return (d>=5 && d<=6) ? 'double' : 'hit';
+    if(t===15||t===16) return (d>=4 && d<=6) ? 'double' : 'hit';
+    if(t===17) return (d>=3 && d<=6) ? 'double' : 'hit';
+    if(t===18){
+      if(d>=3 && d<=6) return 'double';
+      if(d===2||d===7||d===8) return 'stand';
+      return 'hit';
+    }
+    return 'stand';
+  } else {
+    const t = pv.total;
+    if(t<=8) return 'hit';
+    if(t===9)  return (d>=3 && d<=6) ? 'double' : 'hit';
+    if(t===10) return (d>=2 && d<=9) ? 'double' : 'hit';
+    if(t===11) return 'double';
+    if(t===12) return (d>=4 && d<=6) ? 'stand' : 'hit';
+    if(t===13||t===14) return (d>=2 && d<=6) ? 'stand' : 'hit';
+    if(t===15) return (d>=2 && d<=6) ? 'stand' : (d===10 ? 'fold' : 'hit');
+    if(t===16) return (d>=2 && d<=6) ? 'stand' : (d>=9 ? 'fold' : 'hit');
+    return 'stand';
+  }
+}
+function randomRank(){ return RANKS[Math.floor(Math.random()*RANKS.length)]; }
+function randomCard(){
+  const su = SUITS[Math.floor(Math.random()*SUITS.length)];
+  return { rank: randomRank(), suit: su.s, red: su.red };
+}
+
+// ---------------- shared shoe state (used by drill + play, kept separate) ----------------
+function newShoeState(decks){
+  return { decks, cards: buildShoe(decks), dealt:0, runningCount:0 };
+}
+function drawCard(shoeState){
+  if(shoeState.cards.length===0){ // safety reshuffle
+    shoeState.cards = buildShoe(shoeState.decks);
+    shoeState.dealt = 0;
+    shoeState.runningCount = 0;
+  }
+  const card = shoeState.cards.pop();
+  shoeState.dealt++;
+  shoeState.runningCount += hiloValue(card.rank);
+  return card;
+}
+function decksRemaining(shoeState){
+  const remainingCards = shoeState.cards.length;
+  return Math.max(0.5, remainingCards/52);
+}
+function trueCountOf(shoeState){
+  return shoeState.runningCount / decksRemaining(shoeState);
+}
+function penetrationReached(shoeState, pen){
+  return shoeState.dealt / (shoeState.decks*52) >= pen;
+}
+function maybeReshuffle(shoeState, pen){
+  if(penetrationReached(shoeState, pen)){
+    shoeState.cards = buildShoe(shoeState.decks);
+    shoeState.dealt = 0;
+    shoeState.runningCount = 0;
+    return true;
+  }
+  return false;
+}
+
+// ---------------- shoe gauge (visual deck-remaining indicator) ----------------
+function initShoeGauge(prefix, decks){
+  const ticksEl = document.getElementById(prefix+'ShoeGaugeTicks');
+  if(!ticksEl) return;
+  ticksEl.innerHTML = '';
+  for(let i=1;i<decks;i++){
+    const tick = document.createElement('div');
+    tick.style.top = (i/decks*100)+'%';
+    ticksEl.appendChild(tick);
+  }
+  updateShoeGaugeFill(prefix, 1);
+}
+function updateShoeGaugeFill(prefix, fraction){
+  const fillEl = document.getElementById(prefix+'ShoeGaugeFill');
+  if(!fillEl) return;
+  fillEl.style.height = Math.max(0, Math.min(100, fraction*100))+'%';
+}
+function updateShoeGauge(prefix, shoeState){
+  const totalCards = shoeState.decks*52;
+  updateShoeGaugeFill(prefix, shoeState.cards.length/totalCards);
+}
+function flashShuffle(prefix, shoeState, msgFn){
+  const gaugeEl = document.getElementById(prefix+'ShoeGauge');
+  if(gaugeEl){
+    gaugeEl.classList.remove('shuffling');
+    void gaugeEl.offsetWidth; // restart animation
+    gaugeEl.classList.add('shuffling');
+  }
+  initShoeGauge(prefix, shoeState.decks);
+  const banner = document.getElementById(prefix+'ShuffleBanner');
+  if(banner){
+    banner.classList.add('show');
+    clearTimeout(banner._t);
+    banner._t = setTimeout(()=>banner.classList.remove('show'), 1100);
+  }
+  if(msgFn) msgFn('🔀 New shoe — shuffling');
+}
+
+// ---------------- rendering helpers ----------------
+function cardEl(card, hidden){
+  const div = document.createElement('div');
+  div.className = 'card' + (hidden ? ' back' : (card.red ? ' red' : ''));
+  if(!hidden){
+    div.innerHTML = '<div class="corner">'+card.rank+'<br>'+card.suit+'</div><div class="corner bottom">'+card.rank+'<br>'+card.suit+'</div>';
+  }
+  return div;
+}
+function money(n){ return '$'+Math.round(n).toLocaleString('en-US'); }
+
+// ---------------- felt table emblem (SVG watermark, generated per city) ----------------
+function tableEmblemDataUri(label, accent){
+  const safeLabel = String(label);
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260">' +
+      '<text x="200" y="70" font-family="Snell Roundhand, \'Brush Script MT\', Georgia, serif" font-style="italic" font-size="38" text-anchor="middle" fill="'+accent+'" opacity="0.30">' +
+        safeLabel +
+      '</text>' +
+      '<text x="200" y="110" font-family="-apple-system, sans-serif" font-size="21" font-weight="800" letter-spacing="3.5" text-anchor="middle" fill="'+accent+'" opacity="0.20">' +
+        'BLACKJACK PAYS 3 TO 2' +
+      '</text>' +
+      '<text x="200" y="136" font-family="Georgia, serif" font-style="italic" font-size="14" letter-spacing="0.4" text-anchor="middle" fill="'+accent+'" opacity="0.16">' +
+        'Dealer must stand on soft 17' +
+      '</text>' +
+    '</svg>';
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+const FELT_GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E\")";
+function paintFeltTable(el, theme, label){
+  const emblem = tableEmblemDataUri(label, theme.accent);
+  el.style.backgroundImage = 'url("'+emblem+'"), radial-gradient(ellipse at 50% 8%, '+theme.felt.light+' 0%, '+theme.felt.deep+' 55%, '+theme.felt.shadow+' 100%)';
+  el.style.backgroundRepeat = 'no-repeat, no-repeat';
+  el.style.backgroundPosition = 'center 30%, center';
+  el.style.backgroundSize = '78% auto, cover';
+  el.style.borderColor = theme.felt.shadow;
+}
+function paintSceneBackground(el, theme, label){
+  const emblem = tableEmblemDataUri(label, theme.accent);
+  el.style.backgroundImage = 'url("'+emblem+'"), radial-gradient(ellipse at 50% -10%, '+theme.felt.light+' 0%, '+theme.felt.deep+' 55%, '+theme.felt.shadow+' 100%)';
+  el.style.backgroundRepeat = 'no-repeat, no-repeat';
+  el.style.backgroundPosition = 'center 30%, center';
+  el.style.backgroundSize = '92vw auto, cover';
+}
+const PRACTICE_THEME = { felt:{light:'#1d4a3f', deep:'#123128', shadow:'#081912'}, accent:'#9fd6b8' };
+
+// ================= HOME / CITY LIST =================
+function isCityUnlocked(city){
+  return !!progress.unlocked[city.id];
+}
+function evaluateUnlocks(){
+  let changed = false;
+  for(const c of CITIES){
+    if(progress.unlocked[c.id]) continue;
+    if(progress.bankroll >= c.unlockBankroll){
+      progress.unlocked[c.id] = true;
+      changed = true;
+    }
+  }
+  if(changed) saveProgress();
+}
+function renderCities(){
+  evaluateUnlocks();
+  renderBonusCard();
+  const wrap = document.getElementById('cityList');
+  wrap.innerHTML = '';
+  CITIES.forEach(city=>{
+    const unlocked = isCityUnlocked(city);
+    const hands = progress.handsByCity[city.id]||0;
+    const div = document.createElement('div');
+    div.className = 'city-card' + (unlocked?'':' locked');
+    let reqLine = '';
+    if(!unlocked){
+      const pct = Math.max(0, Math.min(100, Math.round((progress.bankroll/city.unlockBankroll)*100)));
+      reqLine =
+        '<div class="req">Reach '+money(city.unlockBankroll)+' bankroll to unlock — '+money(progress.bankroll)+' now</div>'+
+        '<div class="progressbar"><div style="width:'+pct+'%"></div></div>';
+    } else {
+      reqLine = '<div class="req">'+hands+' hands played here</div>';
+    }
+    div.innerHTML =
+      '<div class="info"><h3>'+(unlocked?'':'🔒 ')+city.name+'</h3>'+
+      '<div class="meta">'+city.decks+' deck'+(city.decks>1?'s':'')+' · min '+money(city.minBet)+'</div>'+
+      '<div style="font-size:12px;color:var(--ivory-dim);margin-top:2px;">'+city.tag+'</div>'+
+      reqLine+
+      '</div>'+
+      '<button class="go" '+(unlocked?'':'disabled')+' data-city="'+city.id+'">'+(unlocked?'Play':'Locked')+'</button>';
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('button.go').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(btn.disabled) return;
+      startPlayCity(btn.getAttribute('data-city'));
+      switchTab('play');
+    });
+  });
+}
+
+// ================= NAVIGATION =================
+function switchTab(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-screen')===name));
+  if(name==='home') renderCities();
+  if(name==='stats') renderStats();
+}
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>switchTab(t.getAttribute('data-screen')));
+});
+
+// ================= CHECK COUNT MODAL (shared) =================
+let pendingCheck = null; // {shoeState, onDone}
+function openCheckModal(shoeState, opts){
+  opts = opts || {};
+  pendingCheck = { shoeState };
+  document.getElementById('checkStep1').style.display='block';
+  document.getElementById('checkStep2').style.display='none';
+  document.getElementById('guessRunning').value='';
+  document.getElementById('guessTrue').value='';
+  document.getElementById('trueCountField').style.display = shoeState.decks>1 ? 'block':'none';
+  document.getElementById('checkPrompt').textContent = shoeState.decks>1
+    ? "Enter the running count and true count you've kept since the last shuffle."
+    : "Enter the running count you've kept since the last shuffle.";
+  document.getElementById('checkModal').classList.add('show');
+}
+function closeCheckModal(){
+  document.getElementById('checkModal').classList.remove('show');
+  pendingCheck = null;
+}
+function recordCheck(correct){
+  progress.totalChecks++;
+  if(correct){
+    progress.correctChecks++;
+    progress.currentStreak++;
+    if(progress.currentStreak>progress.bestStreak) progress.bestStreak=progress.currentStreak;
+  } else {
+    progress.currentStreak=0;
+  }
+  saveProgress();
+}
+function showRevealResult(actualRunning, actualTrue, guessRunning, guessTrue, decks){
+  const runOk = guessRunning!==null && guessRunning===actualRunning;
+  let trueOk = true;
+  if(decks>1){
+    trueOk = guessTrue!==null && Math.abs(guessTrue-actualTrue)<=0.5;
+  }
+  const correct = runOk && trueOk;
+  recordCheck(correct);
+  const step2 = document.getElementById('checkStep2');
+  document.getElementById('checkStep1').style.display='none';
+  step2.style.display='block';
+  let html = '<div class="result-box '+(correct?'correct':'wrong')+'">';
+  html += '<div class="odometer">'+(actualRunning>0?'+':'')+actualRunning+'</div>';
+  html += '<div class="odosub">running count'+(decks>1 ? ' · true count '+(actualTrue>0?'+':'')+actualTrue.toFixed(1) : '')+'</div>';
+  html += '<div class="verdict" style="margin-top:8px;">'+(correct ? '✅ Spot on' : '❌ Not quite — keep drilling')+'</div>';
+  if(guessRunning!==null){
+    html += '<div style="font-size:12px;color:var(--ivory-dim);margin-top:4px;">Your guess: '+(guessRunning>0?'+':'')+guessRunning+(decks>1 && guessTrue!==null ? ' / true '+(guessTrue>0?'+':'')+guessTrue : '')+'</div>';
+  }
+  html += '</div><button class="btn-main" id="closeResultBtn">Back to the table</button>';
+  step2.innerHTML = html;
+  document.getElementById('closeResultBtn').addEventListener('click', closeCheckModal);
+}
+document.getElementById('submitGuessBtn').addEventListener('click', ()=>{
+  if(!pendingCheck) return;
+  const ss = pendingCheck.shoeState;
+  const gr = document.getElementById('guessRunning').value;
+  const gt = document.getElementById('guessTrue').value;
+  const guessRunning = gr===''? null : parseInt(gr,10);
+  const guessTrue = gt===''? null : parseFloat(gt);
+  showRevealResult(ss.runningCount, trueCountOf(ss), guessRunning, guessTrue, ss.decks);
+});
+document.getElementById('skipGuessBtn').addEventListener('click', ()=>{
+  if(!pendingCheck) return;
+  const ss = pendingCheck.shoeState;
+  showRevealResult(ss.runningCount, trueCountOf(ss), null, null, ss.decks);
+});
+
+// ================= LEARN TAB ================= (static, nothing to init)
+
+// ================= DRILL TAB =================
+let drillShoe = null;
+let drillTimer = null;
+let drillActive = false;
+let drillDeckChoice = 1;
+let drillSpeedChoice = 1000;
+let drillMode = 'single';
+let drillTableNumPlayers = 1;
+const DRILL_DECK_OPTS = [1,2,6,8];
+const DRILL_SPEED_OPTS = [{label:'Slow',ms:1600},{label:'Medium',ms:900},{label:'Fast',ms:500}];
+const DRILL_MODE_OPTS = [
+  {id:'single', label:'Single card'},
+  {id:'table1', label:'1 player'},
+  {id:'table4', label:'4 players'},
+];
+
+function renderDrillModePills(){
+  const wrap = document.getElementById('drillMode');
+  wrap.innerHTML='';
+  DRILL_MODE_OPTS.forEach(opt=>{
+    const locked = !progress.isPro && opt.id!=='single';
+    const b = document.createElement('button');
+    b.className = 'pill'+((opt.id===drillMode && !locked)?' active':'')+(locked?' locked-pill':'');
+    b.innerHTML = opt.label + (locked ? ' 🔒' : '');
+    b.addEventListener('click', ()=>{
+      if(locked){ openSettings(); return; }
+      drillMode=opt.id; renderDrillModePills();
+    });
+    wrap.appendChild(b);
+  });
+}
+function renderDrillPills(){
+  renderDrillModePills();
+  const deckWrap = document.getElementById('drillDecks');
+  deckWrap.innerHTML='';
+  DRILL_DECK_OPTS.forEach(n=>{
+    const b = document.createElement('button');
+    b.className='pill'+(n===drillDeckChoice?' active':'');
+    b.textContent = n+' deck'+(n>1?'s':'');
+    b.addEventListener('click', ()=>{ drillDeckChoice=n; renderDrillPills(); });
+    deckWrap.appendChild(b);
+  });
+  const speedWrap = document.getElementById('drillSpeed');
+  speedWrap.innerHTML='';
+  DRILL_SPEED_OPTS.forEach(opt=>{
+    const b = document.createElement('button');
+    b.className='pill'+(opt.ms===drillSpeedChoice?' active':'');
+    b.textContent = opt.label;
+    b.addEventListener('click', ()=>{ drillSpeedChoice=opt.ms; renderDrillPills(); });
+    speedWrap.appendChild(b);
+  });
+}
+function updateDrillShoeMeta(suffix){
+  document.getElementById('drillShoeMeta').textContent = drillDeckChoice+' deck'+(drillDeckChoice>1?'s':'')+' · '+suffix;
+}
+
+document.getElementById('drillStartBtn').addEventListener('click', ()=>{
+  drillShoe = newShoeState(drillDeckChoice);
+  initShoeGauge('drill', drillDeckChoice);
+  document.getElementById('drillSetup').style.display='none';
+  document.getElementById('drillTableWrap').style.display='flex';
+  drillActive = true;
+  beginDrillLoop();
+});
+function beginDrillLoop(){
+  clearInterval(drillTimer); clearTimeout(drillTimer);
+  if(drillMode==='single'){
+    updateDrillShoeMeta('flipping...');
+    renderSingleCardContent();
+    runSingleCardLoop();
+  } else {
+    drillTableNumPlayers = drillMode==='table1' ? 1 : 4;
+    updateDrillShoeMeta((drillTableNumPlayers===1?'1-player':'4-player')+' table');
+    runTableDrillRound(drillTableNumPlayers);
+  }
+}
+
+// ---- single card mode ----
+function renderSingleCardContent(){
+  document.getElementById('drillContent').innerHTML =
+    '<div class="hand-row" style="justify-content:center;">'+
+      '<div class="hand-label">Cards flipped: <span id="drillFlippedCount">0</span></div>'+
+      '<div class="cards" id="drillCards"></div>'+
+    '</div>';
+}
+function showDrillMsg(text){
+  const el = document.getElementById('drillMsg');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 1400);
+}
+function runSingleCardLoop(){
+  clearInterval(drillTimer);
+  drillTimer = setInterval(()=>{
+    if(maybeReshuffle(drillShoe, 0.8)){
+      flashShuffle('drill', drillShoe, showDrillMsg);
+    }
+    const card = drawCard(drillShoe);
+    const cardsWrap = document.getElementById('drillCards');
+    cardsWrap.innerHTML='';
+    cardsWrap.appendChild(cardEl(card,false));
+    playCardSound();
+    updateShoeGauge('drill', drillShoe);
+    document.getElementById('drillFlippedCount').textContent = drillShoe.dealt;
+  }, drillSpeedChoice);
+}
+
+// ---- multi-player table mode ----
+function renderTableDrillLayout(numPlayers){
+  let html = '<div class="td-dealer-row"><div class="seat-label">Dealer</div><div class="cards" id="tdDealerCards"></div><div class="hand-total" id="tdDealerTotal"></div></div>';
+  html += '<div class="td-players-grid">';
+  for(let p=0;p<numPlayers;p++){
+    html += '<div class="td-hand"><div class="seat-label">'+(numPlayers===1?'Player':'Seat '+(p+1))+'</div><div class="cards" id="tdPlayerCards'+p+'"></div><div class="hand-total" id="tdPlayerTotal'+p+'"></div></div>';
+  }
+  html += '</div>';
+  document.getElementById('drillContent').innerHTML = html;
+}
+function runTableDrillRound(numPlayers){
+  drillTableNumPlayers = numPlayers;
+  renderTableDrillLayout(numPlayers);
+  const mini = numPlayers>1;
+  const players = Array.from({length:numPlayers}, ()=>[]);
+  const dealer = [];
+  let holeHidden = true;
+
+  function dealTo(handArr, wrapId, hidden){
+    if(maybeReshuffle(drillShoe, 0.8)){
+      flashShuffle('drill', drillShoe, showDrillMsg);
+    }
+    const card = drawCard(drillShoe);
+    handArr.push(card);
+    const node = cardEl(card, hidden);
+    if(mini) node.classList.add('mini');
+    document.getElementById(wrapId).appendChild(node);
+    playCardSound();
+    updateShoeGauge('drill', drillShoe);
+    updateDrillShoeMeta(drillShoe.dealt+' dealt');
+  }
+  function refreshTotals(){
+    for(let p=0;p<numPlayers;p++){
+      const pv = handValue(players[p]);
+      document.getElementById('tdPlayerTotal'+p).textContent = players[p].length ? (pv.total + (pv.soft?' (soft)':'')) : '';
+    }
+    const dEl = document.getElementById('tdDealerTotal');
+    if(!dealer.length){ dEl.textContent=''; }
+    else if(holeHidden){ dEl.textContent='?'; }
+    else { const dv = handValue(dealer); dEl.textContent = dv.total + (dv.soft?' (soft)':''); }
+  }
+
+  const dealOrder = [];
+  for(let r=0;r<2;r++){
+    for(let p=0;p<numPlayers;p++) dealOrder.push({p});
+    dealOrder.push({dealer:true, hidden:r===1});
+  }
+  let di = 0;
+  function dealStep(){
+    if(di>=dealOrder.length){ drillTimer=setTimeout(()=>playHand(0), drillSpeedChoice); return; }
+    const o = dealOrder[di++];
+    if(o.dealer) dealTo(dealer, 'tdDealerCards', o.hidden);
+    else dealTo(players[o.p], 'tdPlayerCards'+o.p, false);
+    refreshTotals();
+    drillTimer = setTimeout(dealStep, drillSpeedChoice);
+  }
+  function playHand(p){
+    if(p>=numPlayers){ dealerReveal(); return; }
+    function step(){
+      const pv = handValue(players[p]);
+      if(pv.total>=21){ drillTimer=setTimeout(()=>playHand(p+1), drillSpeedChoice); return; }
+      let action = bestAction(players[p], dealer[0]);
+      if(players[p].length>2){
+        if(action==='double') action='hit';
+        if(action==='fold') action='stand';
+      }
+      if(action==='hit' || action==='double'){
+        dealTo(players[p], 'tdPlayerCards'+p, false);
+        refreshTotals();
+        if(action==='double'){ drillTimer=setTimeout(()=>playHand(p+1), drillSpeedChoice); return; }
+        drillTimer = setTimeout(step, drillSpeedChoice);
+      } else {
+        drillTimer = setTimeout(()=>playHand(p+1), drillSpeedChoice);
+      }
+    }
+    step();
+  }
+  function dealerReveal(){
+    holeHidden = false;
+    document.getElementById('tdDealerCards').innerHTML='';
+    dealer.forEach(c=>{
+      const node = cardEl(c,false);
+      if(mini) node.classList.add('mini');
+      document.getElementById('tdDealerCards').appendChild(node);
+    });
+    playCardSound();
+    refreshTotals();
+    drillTimer = setTimeout(dealerPlayStep, drillSpeedChoice);
+  }
+  function dealerPlayStep(){
+    const dv = handValue(dealer);
+    if(dv.total<17){
+      dealTo(dealer, 'tdDealerCards', false);
+      refreshTotals();
+      drillTimer = setTimeout(dealerPlayStep, drillSpeedChoice);
+    } else {
+      drillTimer = setTimeout(()=>{ if(drillActive) runTableDrillRound(numPlayers); }, 1700);
+    }
+  }
+  dealStep();
+}
+
+function resumeDrill(){
+  if(!drillShoe || document.getElementById('drillTableWrap').style.display==='none') return;
+  if(drillMode==='single'){
+    runSingleCardLoop();
+  } else {
+    runTableDrillRound(drillTableNumPlayers);
+  }
+}
+document.getElementById('drillCheckBtn').addEventListener('click', ()=>{
+  if(!drillShoe) return;
+  clearInterval(drillTimer); clearTimeout(drillTimer);
+  openCheckModal(drillShoe);
+});
+// resume drill after modal closes, if it was drill's shoe
+function bindResultClose(){
+  const btn = document.getElementById('closeResultBtn');
+  if(btn){
+    btn.addEventListener('click', ()=>{ resumeDrill(); });
+  }
+}
+// hook into showRevealResult by monkey-patching after DOM update: simplest is to add listener each render (already added in showRevealResult); extend it:
+const _origShowReveal = showRevealResult;
+showRevealResult = function(){
+  _origShowReveal.apply(null, arguments);
+  bindResultClose();
+};
+
+document.getElementById('drillStopBtn').addEventListener('click', ()=>{
+  clearInterval(drillTimer); clearTimeout(drillTimer);
+  drillActive = false;
+  drillShoe = null;
+  document.getElementById('drillTableWrap').style.display='none';
+  document.getElementById('drillSetup').style.display='block';
+});
+
+// ================= PLAY TAB (blackjack) =================
+let playCity = null;
+let playShoe = null;
+let bet = 0;
+let autoDeal = false;
+let hands = []; // {cards:[], bet:number, done:boolean, busted:boolean, isAceSplit:boolean, natural:boolean, result:string|null}
+let activeHandIdx = 0;
+let dealerHand = [];
+let inRound = false;
+let dealerHoleHidden = true;
+const MAX_SPLIT_HANDS = 4;
+
+function startPlayCity(cityId){
+  playCity = cityById(cityId);
+  playShoe = newShoeState(playCity.decks);
+  bet = 0;
+  inRound = false;
+  paintFeltTable(document.getElementById('playFelt'), playCity, playCity.name);
+  initShoeGauge('play', playCity.decks);
+  document.getElementById('playShoeMeta').textContent = playCity.name+' · '+playCity.decks+' deck'+(playCity.decks>1?'s':'')+' · min '+money(playCity.minBet);
+  renderChips();
+  resetTableVisual();
+  updateBetZone();
+  document.getElementById('chipRow').style.display='flex';
+  document.getElementById('betActionsRow').style.display='flex';
+  document.getElementById('playActionRow').style.display='none';
+}
+function resetTableVisual(){
+  document.getElementById('dealerCards').innerHTML='';
+  document.getElementById('playerHandsWrap').innerHTML='';
+  document.getElementById('dealerTotal').textContent='';
+}
+function showPlayMsg(text){
+  const el = document.getElementById('playMsg');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 1400);
+}
+function chipDenomsFor(minBet){
+  if(minBet<=50)   return [25,50,100,250];
+  if(minBet<=250)  return [100,250,500,1000];
+  if(minBet<=1000) return [250,500,1000,2500];
+  if(minBet<=5000) return [1000,2500,5000,10000];
+  return [2500,5000,10000,25000];
+}
+function chipLabel(v){
+  if(v>=1000){
+    const k = v/1000;
+    return (k%1===0 ? k : k.toFixed(1))+'K';
+  }
+  return String(v);
+}
+// Classic casino chip colors by denomination.
+function chipColor(v){
+  if(v<25)   return '#5b6472'; // gray
+  if(v<50)   return '#2e8b57'; // green ($25)
+  if(v<100)  return '#c1682a'; // orange ($50)
+  if(v<250)  return '#26262b'; // black ($100)
+  if(v<500)  return '#b5397f'; // pink ($250)
+  if(v<1000) return '#6d3bbf'; // purple ($500)
+  if(v<2500) return '#b8902f'; // gold ($1000)
+  if(v<5000) return '#1f7a8c'; // teal
+  return '#8f2626';            // burgundy ($5000+)
+}
+function renderChips(){
+  const wrap = document.getElementById('chipRow');
+  wrap.innerHTML='';
+  const useDenoms = chipDenomsFor(playCity ? playCity.minBet : 50);
+  useDenoms.forEach(d=>{
+    const c = document.createElement('button');
+    c.className='chip';
+    c.style.setProperty('--chip', chipColor(d));
+    c.innerHTML = '<span>'+chipLabel(d)+'</span>';
+    c.addEventListener('click', ()=>{
+      if(inRound) return;
+      bet += d;
+      if(bet > progress.bankroll) bet = progress.bankroll;
+      updateBetZone();
+      playChipSound();
+    });
+    wrap.appendChild(c);
+  });
+}
+function updateBetZone(){
+  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+  const hasBet = bet > 0;
+  document.getElementById('betPlaceholder').style.display = hasBet ? 'none' : '';
+  document.getElementById('betActive').style.display = hasBet ? 'flex' : 'none';
+  const betChip = document.querySelector('.bet-chip-icon');
+  if(betChip) betChip.style.setProperty('--chip', chipColor(bet||0));
+  document.getElementById('betTotalAmount').textContent = money(bet).replace('$','');
+  const valid = bet >= playCity.minBet && bet <= progress.bankroll;
+  document.getElementById('betDealBtn').disabled = !valid;
+}
+document.getElementById('betClearBtn').addEventListener('click', ()=>{
+  if(inRound) return;
+  bet = 0;
+  updateBetZone();
+});
+document.getElementById('betDealBtn').addEventListener('click', ()=>{
+  if(inRound) return;
+  if(bet < playCity.minBet || bet > progress.bankroll) return;
+  beginRound();
+});
+document.getElementById('betAutoBtn').addEventListener('click', ()=>{
+  autoDeal = !autoDeal;
+  document.getElementById('betAutoBtn').classList.toggle('active', autoDeal);
+});
+
+function dealCardTo(handArr, wrapId, hidden){
+  const card = drawCard(playShoe);
+  handArr.push(card);
+  const wrap = document.getElementById(wrapId);
+  wrap.appendChild(cardEl(card, hidden));
+  playCardSound();
+  updateShoeGauge('play', playShoe);
+  return card;
+}
+function cityPenetration(){
+  // more decks -> slightly deeper penetration before reshuffle
+  if(!playCity) return 0.75;
+  return playCity.decks<=1 ? 0.65 : playCity.decks<=2 ? 0.7 : 0.78;
+}
+
+function beginRound(){
+  inRound = true;
+  // Reshuffle only BETWEEN hands (never mid-hand), so the running count stays honest.
+  if(maybeReshuffle(playShoe, cityPenetration())){
+    flashShuffle('play', playShoe, showPlayMsg);
+  }
+  resetTableVisual();
+  dealerHand=[];
+  hands = [{cards:[], bet:bet, done:false, busted:false, isAceSplit:false, natural:false, result:null}];
+  activeHandIdx = 0;
+  dealerHoleHidden = true;
+  document.getElementById('betZone').style.display='none';
+  document.getElementById('chipRow').style.display='none';
+  document.getElementById('betActionsRow').style.display='none';
+  document.getElementById('playActionRow').style.display='flex';
+  renderPlayerHands();
+
+  const steps = [
+    ()=>dealCardToHand(hands[0]),
+    ()=>dealCardTo(dealerHand,'dealerCards',false),
+    ()=>dealCardToHand(hands[0]),
+    ()=>dealCardTo(dealerHand,'dealerCards',true), // hole card hidden
+  ];
+  let stepIndex = 0;
+  function dealNext(){
+    if(stepIndex < steps.length){
+      steps[stepIndex](); stepIndex++;
+      updateDealerTotal();
+      setTimeout(dealNext, 180);
+    } else {
+      const pbj = handValue(hands[0].cards).total===21;
+      const dbj = handValue(dealerHand).total===21; // dealer peeks on a 10/Ace up
+      if(pbj){ hands[0].natural = true; hands[0].done = true; }
+      if(pbj || dbj){
+        // Natural on either side ends the hand immediately — no acting into a dealer blackjack.
+        renderPlayerHands();
+        revealHole();
+        setTimeout(resolveRound, 500);
+      } else {
+        updateActionButtons();
+      }
+    }
+  }
+  dealNext();
+}
+
+function currentHand(){ return hands[activeHandIdx]; }
+function totalExposure(){ return hands.reduce((s,h)=>s+h.bet, 0); }
+function canSplit(h){
+  if(!h || h.cards.length!==2) return false;
+  if(hands.length >= MAX_SPLIT_HANDS) return false;
+  // Split on equal blackjack VALUE, not identical rank — so K+Q, 10+J, Q+10 all split (both are 10s).
+  if(rankNum(h.cards[0].rank) !== rankNum(h.cards[1].rank)) return false;
+  return progress.bankroll >= totalExposure() + h.bet;
+}
+
+function dealCardToHand(hand){
+  const card = drawCard(playShoe);
+  hand.cards.push(card);
+  playCardSound();
+  updateShoeGauge('play', playShoe);
+  renderPlayerHands();
+  return card;
+}
+
+function renderPlayerHands(){
+  const wrap = document.getElementById('playerHandsWrap');
+  wrap.innerHTML='';
+  const multi = hands.length>1;
+  hands.forEach((h, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'hand-row' + (multi && inRound && idx===activeHandIdx && !h.done ? ' active-hand' : '');
+    const label = document.createElement('div');
+    label.className='hand-label';
+    label.textContent = multi ? ('Hand '+(idx+1)+' · '+money(h.bet)) : 'You';
+    const cardsDiv = document.createElement('div');
+    cardsDiv.className='cards';
+    h.cards.forEach(c=>cardsDiv.appendChild(cardEl(c,false)));
+    const totalDiv = document.createElement('div');
+    totalDiv.className='hand-total';
+    let totalText = '';
+    if(h.cards.length){
+      const hv = handValue(h.cards);
+      totalText = hv.total + (hv.soft?' (soft)':'');
+    }
+    if(h.result) totalText += (totalText?' — ':'')+h.result;
+    totalDiv.textContent = totalText;
+    row.appendChild(label); row.appendChild(cardsDiv); row.appendChild(totalDiv);
+    wrap.appendChild(row);
+  });
+}
+
+function updateDealerTotal(){
+  if(dealerHoleHidden){
+    document.getElementById('dealerTotal').textContent = '?';
+  } else {
+    const dv = handValue(dealerHand);
+    document.getElementById('dealerTotal').textContent = dv.total + (dv.soft?' (soft)':'');
+  }
+}
+
+function updateActionButtons(){
+  const h = currentHand();
+  const canAct = inRound && h && !h.done;
+  document.getElementById('hitBtn').disabled = !canAct;
+  document.getElementById('standBtn').disabled = !canAct;
+  const canDouble = canAct && h.cards.length===2 && progress.bankroll >= totalExposure() + h.bet;
+  document.getElementById('doubleBtn').disabled = !canDouble;
+  const splitBtnEl = document.getElementById('splitBtn');
+  const splitEligible = canAct && canSplit(h);
+  splitBtnEl.style.display = splitEligible ? '' : 'none';
+  splitBtnEl.disabled = !splitEligible;
+}
+
+document.getElementById('hitBtn').addEventListener('click', ()=>{
+  if(!inRound) return;
+  const h = currentHand();
+  if(!h || h.done) return;
+  dealCardToHand(h);
+  const pv = handValue(h.cards);
+  if(pv.total>=21){
+    h.done = true;
+    if(pv.total>21) h.busted = true;
+    advanceHand();
+  } else {
+    updateActionButtons();
+  }
+});
+document.getElementById('doubleBtn').addEventListener('click', ()=>{
+  if(!inRound) return;
+  const h = currentHand();
+  if(!h || h.done) return;
+  if(progress.bankroll < totalExposure() + h.bet) return;
+  h.bet = h.bet*2;
+  dealCardToHand(h);
+  const pv = handValue(h.cards);
+  h.done = true;
+  if(pv.total>21) h.busted = true;
+  advanceHand();
+});
+document.getElementById('splitBtn').addEventListener('click', ()=>{
+  if(!inRound) return;
+  const h = currentHand();
+  if(!canSplit(h)) return;
+  const isAceSplit = h.cards[0].rank==='A';
+  const movedCard = h.cards.pop();
+  h.isAceSplit = isAceSplit;
+  const newHand = {cards:[movedCard], bet:h.bet, done:false, busted:false, isAceSplit, natural:false, result:null};
+  hands.splice(activeHandIdx+1, 0, newHand);
+  playChipSound();
+  // deal current hand back up to two cards
+  dealCardToHand(h);
+  const pv = handValue(h.cards);
+  if(isAceSplit || pv.total===21){
+    h.done = true;
+    if(pv.total===21 && !isAceSplit) h.natural = false; // 21 after split is not a blackjack bonus
+    advanceHand();
+  } else {
+    updateActionButtons();
+  }
+});
+document.getElementById('standBtn').addEventListener('click', ()=>{
+  if(!inRound) return;
+  const h = currentHand();
+  if(!h || h.done) return;
+  h.done = true;
+  advanceHand();
+});
+
+function advanceHand(){
+  let nextIdx = activeHandIdx+1;
+  while(nextIdx < hands.length && hands[nextIdx].done) nextIdx++;
+  if(nextIdx < hands.length){
+    activeHandIdx = nextIdx;
+    const h = hands[activeHandIdx];
+    renderPlayerHands();
+    if(h.cards.length===1){
+      // post-split hand needs its second card
+      dealCardToHand(h);
+      const pv = handValue(h.cards);
+      if(h.isAceSplit || pv.total===21){
+        h.done = true;
+        setTimeout(advanceHand, 500);
+        return;
+      }
+    }
+    updateActionButtons();
+  } else {
+    document.getElementById('hitBtn').disabled = true;
+    document.getElementById('standBtn').disabled = true;
+    document.getElementById('doubleBtn').disabled = true;
+    document.getElementById('splitBtn').style.display = 'none';
+    revealHole();
+    dealerPlay();
+  }
+}
+
+function revealHole(){
+  dealerHoleHidden=false;
+  document.getElementById('dealerCards').innerHTML='';
+  dealerHand.forEach(c=>document.getElementById('dealerCards').appendChild(cardEl(c,false)));
+  playCardSound();
+  updateDealerTotal();
+}
+function dealerPlay(){
+  const anyLive = hands.some(h=>!h.busted);
+  if(!anyLive){ setTimeout(resolveRound,300); return; }
+  function step(){
+    const dv = handValue(dealerHand);
+    if(dv.total<17){
+      dealCardTo(dealerHand,'dealerCards',false);
+      updateDealerTotal();
+      setTimeout(step, 500);
+    } else {
+      setTimeout(resolveRound, 400);
+    }
+  }
+  setTimeout(step, 400);
+}
+function resolveRound(){
+  inRound = false;
+  const dv = handValue(dealerHand);
+  const dealerBJ = dv.total===21 && dealerHand.length===2;
+
+  let totalDelta = 0;
+  const messages = [];
+  const multi = hands.length>1;
+  hands.forEach((h, idx)=>{
+    const pv = handValue(h.cards);
+    let delta;
+    if(pv.total>21){ h.result='Bust'; delta=-h.bet; }
+    else if(dealerBJ && h.natural){ h.result='Push'; delta=0; }
+    else if(h.natural){ h.result='Blackjack!'; delta=Math.round(h.bet*1.5); }
+    else if(dealerBJ){ h.result='Dealer BJ'; delta=-h.bet; }
+    else if(dv.total>21){ h.result='Win'; delta=h.bet; }
+    else if(pv.total>dv.total){ h.result='Win'; delta=h.bet; }
+    else if(pv.total<dv.total){ h.result='Lose'; delta=-h.bet; }
+    else { h.result='Push'; delta=0; }
+    totalDelta += delta;
+    messages.push((multi?('Hand '+(idx+1)+' '):'')+h.result+(delta!==0?' ('+(delta>0?'+':'')+money(delta)+')':''));
+  });
+
+  progress.bankroll += totalDelta;
+  progress.handsByCity[playCity.id] = (progress.handsByCity[playCity.id]||0)+1;
+  saveProgress();
+
+  renderPlayerHands();
+  showPlayMsg(messages.join('  ·  '));
+  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+  document.getElementById('playActionRow').style.display='none';
+
+  if(progress.bankroll <= 0){
+    setTimeout(()=>{
+      progress.bankroll = 1000;
+      saveProgress();
+      showPlayMsg("Bankroll's dry — house re-stakes you at $1,000");
+      document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+      setTimeout(promptNextBet, 1400);
+    }, 1200);
+  } else {
+    setTimeout(promptNextBet, 1600);
+  }
+}
+function promptNextBet(){
+  resetTableVisual();
+  if(bet > progress.bankroll) bet = progress.bankroll;
+  document.getElementById('betZone').style.display='flex';
+  document.getElementById('chipRow').style.display='flex';
+  document.getElementById('betActionsRow').style.display='flex';
+  updateBetZone();
+  if(autoDeal && bet >= playCity.minBet && bet <= progress.bankroll){
+    setTimeout(()=>{ if(!inRound) beginRound(); }, 700);
+  }
+}
+document.getElementById('playCheckBtn').addEventListener('click', ()=>{
+  if(!playShoe) return;
+  openCheckModal(playShoe);
+});
+
+// ================= DAILY CHIP QUIZ =================
+function todayStr(){
+  const now = new Date();
+  return now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+}
+function bonusAvailable(){
+  return progress.dailyBonus.lastAttemptDate !== todayStr();
+}
+function renderBonusCard(){
+  const btn = document.getElementById('bonusBtn');
+  const reqEl = document.getElementById('bonusReq');
+  if(bonusAvailable()){
+    btn.disabled = false;
+    btn.textContent = 'Play';
+    reqEl.textContent = 'Hit, stand, double, or fold — call it right and the house pays you 500 chips.';
+    document.getElementById('bonusCard').classList.remove('locked');
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'Done';
+    const won = progress.dailyBonus.lastResult === 'won';
+    reqEl.textContent = won ? '✅ Won 500 chips today — come back tomorrow.' : '❌ Missed it today — come back tomorrow.';
+    document.getElementById('bonusCard').classList.add('locked');
+  }
+}
+
+let chipQuiz = null; // { playerCards, dealerCard, answer }
+document.getElementById('bonusBtn').addEventListener('click', ()=>{
+  if(!bonusAvailable()) return;
+  openChipQuiz();
+});
+function openChipQuiz(){
+  // Deal from a real shuffled single deck so no impossible duplicate cards appear.
+  const quizDeck = buildShoe(1);
+  const playerCards = [quizDeck.pop(), quizDeck.pop()];
+  const dealerCard = quizDeck.pop();
+  const answer = bestAction(playerCards, dealerCard);
+  chipQuiz = { playerCards, dealerCard, answer };
+
+  document.getElementById('chipStep1').style.display='block';
+  document.getElementById('chipStep2').style.display='none';
+  const dWrap = document.getElementById('chipDealerCards');
+  const pWrap = document.getElementById('chipPlayerCards');
+  dWrap.innerHTML=''; pWrap.innerHTML='';
+  document.getElementById('chipPlayerTotal').textContent = '';
+
+  document.getElementById('chipModal').classList.add('show');
+
+  const dealSteps = [
+    ()=>{ dWrap.appendChild(cardEl(dealerCard,false)); },
+    ()=>{ pWrap.appendChild(cardEl(playerCards[0],false)); },
+    ()=>{ pWrap.appendChild(cardEl(playerCards[1],false));
+          const pv = handValue(playerCards);
+          document.getElementById('chipPlayerTotal').textContent = pv.total + (pv.soft?' (soft)':''); },
+  ];
+  let i=0;
+  function next(){
+    if(i<dealSteps.length){ dealSteps[i](); playCardSound(); i++; setTimeout(next,180); }
+  }
+  next();
+}
+function closeChipModal(){
+  document.getElementById('chipModal').classList.remove('show');
+  chipQuiz = null;
+  renderBonusCard();
+}
+function answerChipQuiz(choice){
+  if(!chipQuiz) return;
+  const correct = choice === chipQuiz.answer;
+  progress.dailyBonus.lastAttemptDate = todayStr();
+  progress.dailyBonus.lastResult = correct ? 'won' : 'lost';
+  if(correct){ progress.bankroll += 500; }
+  saveProgress();
+  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+
+  const step2 = document.getElementById('chipStep2');
+  document.getElementById('chipStep1').style.display='none';
+  step2.style.display='block';
+  const labels = {hit:'Hit', stand:'Stand', double:'Double', fold:'Fold'};
+  let html = '<div class="result-box '+(correct?'correct':'wrong')+'">';
+  html += '<div class="odometer" style="font-size:22px;">'+labels[chipQuiz.answer]+'</div>';
+  html += '<div class="odosub">was the play</div>';
+  html += '<div class="verdict" style="margin-top:8px;">'+(correct ? '✅ +500 chips' : '❌ No chips this time') + '</div>';
+  html += '<div style="font-size:12px;color:var(--ivory-dim);margin-top:4px;">You chose: '+labels[choice]+'</div>';
+  html += '</div><button class="btn-main" id="closeChipResultBtn">Back to the lobby</button>';
+  step2.innerHTML = html;
+  document.getElementById('closeChipResultBtn').addEventListener('click', closeChipModal);
+}
+document.getElementById('chipHitBtn').addEventListener('click', ()=>answerChipQuiz('hit'));
+document.getElementById('chipStandBtn').addEventListener('click', ()=>answerChipQuiz('stand'));
+document.getElementById('chipDoubleBtn').addEventListener('click', ()=>answerChipQuiz('double'));
+document.getElementById('chipFoldBtn').addEventListener('click', ()=>answerChipQuiz('fold'));
+
+// ================= SETTINGS / PRO UPGRADE =================
+function renderProSection(){
+  const el = document.getElementById('proSection');
+  if(progress.isPro){
+    el.innerHTML =
+      '<div class="pro-active-row"><div>'+
+        '<div class="label">CountJack Pro</div>'+
+        '<div class="sublabel">Ads removed · Stats & full tables unlocked</div>'+
+      '</div><span class="pro-active-badge">✓ Active</span></div>';
+  } else {
+    el.innerHTML =
+      '<div class="pro-free-row">'+
+        '<div><div class="label">Free version</div>'+
+        '<div class="sublabel">Ads shown · Stats hidden · Single-card drill only</div></div>'+
+        '<button class="btn-main" id="unlockProBtn" style="margin-top:0;">Unlock Pro — Remove Ads</button>'+
+      '</div>';
+    document.getElementById('unlockProBtn').addEventListener('click', unlockPro);
+  }
+}
+function unlockPro(){
+  progress.isPro = true;
+  saveProgress();
+  applyProState();
+}
+function applyProState(){
+  document.querySelector('.tab[data-screen="stats"]').style.display = progress.isPro ? 'flex' : 'none';
+  document.getElementById('adBanner').style.display = progress.isPro ? 'none' : 'flex';
+  renderDrillPills();
+  renderProSection();
+}
+function openSettings(){
+  document.getElementById('soundToggle').checked = progress.soundEnabled;
+  renderProSection();
+  document.getElementById('settingsModal').classList.add('show');
+}
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('adUpgradeBtn').addEventListener('click', openSettings);
+document.getElementById('closeSettingsBtn').addEventListener('click', ()=>{
+  document.getElementById('settingsModal').classList.remove('show');
+});
+document.getElementById('settingsModal').addEventListener('click', (e)=>{
+  if(e.target.id==='settingsModal') document.getElementById('settingsModal').classList.remove('show');
+});
+document.getElementById('soundToggle').addEventListener('change', (e)=>{
+  progress.soundEnabled = e.target.checked;
+  saveProgress();
+  if(progress.soundEnabled) playCardSound();
+});
+
+// ================= STATS TAB =================
+function renderStats(){
+  document.getElementById('statHands').textContent = Object.values(progress.handsByCity).reduce((a,b)=>a+b,0);
+  document.getElementById('statChecks').textContent = progress.totalChecks;
+  document.getElementById('statBest').textContent = progress.bestStreak;
+  document.getElementById('statAccuracy').textContent = progress.totalChecks>0 ? Math.round(100*progress.correctChecks/progress.totalChecks)+'%' : '—';
+  document.getElementById('statBankrollLine').textContent = 'Current bankroll: '+money(progress.bankroll)+' (started at $1,000)';
+}
+document.getElementById('resetBtn').addEventListener('click', async ()=>{
+  progress = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  await saveProgress();
+  renderAll();
+  switchTab('home');
+});
+
+// ================= INIT =================
+function renderAll(){
+  renderCities();
+  renderDrillPills();
+  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+  document.getElementById('soundToggle').checked = progress.soundEnabled;
+  renderStats();
+  applyProState();
+  paintSceneBackground(document.body, cityById('vegas'), 'Las Vegas');
+  paintFeltTable(document.getElementById('drillFelt'), PRACTICE_THEME, 'Practice Table');
+  // default play city to first unlocked if not started
+  if(!playCity){
+    startPlayCity('reno');
+  }
+}
+loadProgress();
+
+})();
+</script>
+<script>
+// Register the service worker so the app installs and runs fully offline.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){ /* offline / unsupported: app still runs */ });
+  });
+}
+</script>
+</body>
+</html>
