@@ -586,6 +586,32 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
 #screen-play .table-wrap, #screen-drill .table-wrap, #screen-holdem-play .table-wrap{ flex:1; min-height:0; }
 #screen-play .felt, #screen-drill .felt{ min-height:0; }
 #screen-holdem-play .poker-felt{ min-height:0; }
+
+/* ===== full-bleed felt tables (clean, edge-to-edge) ===== */
+#screen-play, #screen-holdem-play{ padding-left:6px; padding-right:6px; padding-top:6px; }
+#screen-holdem-play{ background: radial-gradient(ellipse at 50% 12%, #6e1420, #3d0a12 80%); }
+/* felt boxes become transparent layout containers sitting on the full-screen felt */
+#playFelt, #pokerFelt{ background:transparent !important; border:none !important; border-radius:0 !important; box-shadow:none !important; margin:0 !important; }
+#playFelt{ min-height:0; padding:4px 8px; }
+#pokerFelt.ring{ min-height:0; padding:2px 4px; overflow:visible; }
+#playFelt::before, #playFelt::after, #pokerFelt::before, #pokerFelt::after{ display:none !important; }
+#screen-play .controls, #screen-holdem-play .controls{ background:transparent !important; box-shadow:none !important; }
+#playFelt .hand-label{ color: var(--ivory); text-shadow:0 1px 2px rgba(0,0,0,.65); }
+/* hand strength: slim bar at the very top of Hold'em */
+.equity-meter.holdem-top{ margin:0 0 4px; background:rgba(0,0,0,.3); }
+/* Hold'em seats: top seat + board get breathing room so names never hide under the board */
+#pkSeat2{ top:0; }
+#pkSeat3{ top:25%; left:0; }
+#pkSeat1{ top:25%; right:0; }
+#pkSeat0{ bottom:2px; }
+.pk-seat{ width:86px; }
+.pk-center{ top:50%; gap:5px; }
+.pk-center .board-row{ min-height:52px; margin:0; }
+.pk-center .board-row .card{ width:34px; height:50px; font-size:11px; padding:2px 3px; margin-left:-7px; }
+.pk-center .board-row .card:first-child{ margin-left:0; }
+.pk-center .board-row .board-slot{ width:30px; height:46px; border-radius:5px; }
+.pot-display{ font-size:12px; padding:4px 12px; }
+.htab.tab-disabled{ opacity:.4; }
 /* ---------- responsive scaling for iPad / larger screens ---------- */
 /* Phones keep the current edge-to-edge layout. From tablet width up, content
    centers into a comfortable column instead of stretching full-width, while
@@ -736,8 +762,7 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
   <!-- PLAY -->
   <div class="screen" id="screen-play">
     <div class="play-header">
-      <div class="page-title" style="font-size:24px; margin-bottom:2px;">Play</div>
-      <div class="pill-row" id="playModePills" style="margin:6px 0 0;"></div>
+      <div class="pill-row" id="playModePills" style="margin:0;"></div>
     </div>
     <div class="table-wrap">
       <div class="felt" id="playFelt">
@@ -764,16 +789,18 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
       </div>
 
       <div class="controls">
-        <div class="bet-stepper-row">
-          <button class="stepper-btn" id="betMinusBtn">−</button>
-          <div class="bet-input-wrap">
-            <span class="bet-currency">$</span>
-            <input type="number" id="betAmountInput" class="bet-amount-input" inputmode="numeric" value="0">
+        <div id="betZone">
+          <div class="bet-stepper-row">
+            <button class="stepper-btn" id="betMinusBtn">−</button>
+            <div class="bet-input-wrap">
+              <span class="bet-currency">$</span>
+              <input type="number" id="betAmountInput" class="bet-amount-input" inputmode="numeric" value="0">
+            </div>
+            <button class="stepper-btn" id="betPlusBtn">+</button>
           </div>
-          <button class="stepper-btn" id="betPlusBtn">+</button>
+          <div class="bet-hint" id="betHint"></div>
+          <div class="chip-row" id="chipRow"></div>
         </div>
-        <div class="bet-hint" id="betHint"></div>
-        <div class="chip-row" id="chipRow"></div>
         <div class="action-row" id="betActionRow">
           <button class="ghost" id="clearBetBtn">Clear</button>
           <button class="deal" id="dealBtn" style="flex:1; border:none; border-radius:14px; font-weight:700; font-family:var(--body-face); background:var(--brass); color:var(--felt-shadow);">Deal</button>
@@ -858,16 +885,10 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
 
   <!-- HOLD'EM PLAY -->
   <div class="screen active" id="screen-holdem-play">
-    <div class="page-title" style="font-size:24px; margin-bottom:2px;">Hold'em</div>
-    <p class="page-subtitle">4-handed ring — you and 3 opponents. Free chips, no real stakes.</p>
-
-    <div class="city-card" id="holdemBonusCard">
-      <div class="info">
-        <h3>🎁 Get Chips</h3>
-        <div class="meta">One scenario, one call — win 500 chips</div>
-        <div class="req" id="holdemBonusReq">Blackjack or Hold'em — call it right and the house pays you 500 chips.</div>
-      </div>
-      <button class="go" id="holdemBonusBtn">Play</button>
+    <!-- Hand strength on top (out of the felt so it never covers the board) -->
+    <div class="equity-meter holdem-top" id="equityMeter" style="display:none;">
+      <div class="eq-label"><span>Hand strength</span><span class="eq-pct" id="eqPct">50%</span></div>
+      <div class="equity-bar"><div id="eqBarFill" style="width:50%;"></div></div>
     </div>
 
     <div class="table-wrap">
@@ -889,11 +910,6 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
         <div class="pk-seat pk-you" id="pkSeat0"></div>
 
         <div class="pk-dealer" id="pkDealer" style="display:none;">D</div>
-
-        <div class="equity-meter" id="equityMeter" style="display:none;">
-          <div class="eq-label"><span>Hand strength</span><span class="eq-pct" id="eqPct">50%</span></div>
-          <div class="equity-bar"><div id="eqBarFill" style="width:50%;"></div></div>
-        </div>
 
         <div class="result-banner" id="pokerResultBanner"></div>
       </div>
@@ -970,6 +986,10 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
   <button class="htab active" data-hscreen="holdem-play">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.2" y="3.2" width="15.6" height="17.6" rx="2.6"/><path d="M12 8c-1.9 2.1-3.4 3.6-3.4 5.5A3.4 3.4 0 0 0 12 16.9a3.4 3.4 0 0 0 3.4-3.4C15.4 11.6 13.9 10.1 12 8Z" fill="currentColor" stroke="none"/><path d="M12 16.9v2.3"/></svg></span>
     Play
+  </button>
+  <button class="htab" id="holdemBonusBtn">
+    <span class="ic" style="font-size:18px; line-height:23px;">🎁</span>
+    Chips
   </button>
   <button class="htab" data-hscreen="holdem-learn">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c-1.6-1.1-3.9-1.6-6.2-1.6v13.4c2.3 0 4.6.5 6.2 1.6"/><path d="M12 6.2c1.6-1.1 3.9-1.6 6.2-1.6v13.4c-2.3 0-4.6.5-6.2 1.6"/><path d="M12 6.2v13.4"/></svg></span>
@@ -1562,19 +1582,21 @@ function tableEmblemDataUri(label, accent){
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 function paintFeltTable(el, theme, label){
-  const emblem = tableEmblemDataUri(label, theme.accent);
-  el.style.backgroundImage = 'url("'+emblem+'"), radial-gradient(ellipse at 50% 20%, '+theme.felt.light+', '+theme.felt.deep+' 70%)';
-  el.style.backgroundRepeat = 'no-repeat, no-repeat';
-  el.style.backgroundPosition = 'center 54%, center';
-  el.style.backgroundSize = '62% auto, cover';
-  el.style.borderColor = theme.felt.shadow;
+  const grad = 'radial-gradient(ellipse at 50% 16%, '+theme.felt.light+', '+theme.felt.deep+' 78%)';
+  if(el && el.id==='playFelt'){
+    // full-bleed: the whole Play screen IS the felt (per-city colour), no emblem
+    const scr = document.getElementById('screen-play');
+    if(scr) scr.style.background = grad;
+  } else if(el){
+    el.style.backgroundImage = grad;   // drill practice felt keeps its boxed look
+    el.style.borderColor = theme.felt.shadow;
+  }
 }
 function paintSceneBackground(el, theme, label){
-  const emblem = tableEmblemDataUri(label, theme.accent);
-  el.style.backgroundImage = 'url("'+emblem+'"), radial-gradient(ellipse at 50% -10%, '+theme.felt.light+' 0%, '+theme.felt.deep+' 55%, '+theme.felt.shadow+' 100%)';
-  el.style.backgroundRepeat = 'no-repeat, no-repeat';
-  el.style.backgroundPosition = 'center 30%, center';
-  el.style.backgroundSize = 'min(92vw, 520px) auto, cover';
+  // plain dark felt gradient behind the lobby/learn/stats — no watermark clutter
+  el.style.backgroundImage = 'radial-gradient(ellipse at 50% -10%, '+theme.felt.light+' 0%, '+theme.felt.deep+' 55%, '+theme.felt.shadow+' 100%)';
+  el.style.backgroundRepeat = 'no-repeat';
+  el.style.backgroundSize = 'cover';
 }
 const PRACTICE_THEME = { felt:{light:'#1d4a3f', deep:'#123128', shadow:'#081912'}, accent:'#9fd6b8' };
 
@@ -1643,6 +1665,7 @@ document.querySelectorAll('#blackjackTabbar .tab').forEach(t=>{
 });
 
 function switchHoldemTab(name){
+  if(!name || !document.getElementById('screen-'+name)) return;   // e.g. the 🎁 Chips button has no screen
   document.querySelectorAll('#holdemApp .screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('#holdemTabbar .htab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-hscreen')===name));
@@ -2085,6 +2108,7 @@ function startPlayCity(cityId){
   updateBetDisplay();
   showPlayMsg('Place your bet');
   document.getElementById('betActionRow').style.display='flex';
+  document.getElementById('betZone').style.display='block';
   document.getElementById('playActionRow').style.display='none';
   document.getElementById('nextHandRow').style.display='none';
 }
@@ -2247,6 +2271,7 @@ function beginRound(){
   hasActedThisHand = false;
   document.getElementById('insuranceRow').style.display='none';
   document.getElementById('betActionRow').style.display='none';
+  document.getElementById('betZone').style.display='none';
   document.getElementById('playActionRow').style.display='flex';
   document.getElementById('nextHandRow').style.display='none';
 
@@ -2572,6 +2597,7 @@ document.getElementById('roundClearBtn').addEventListener('click', ()=>{
   resetTableVisual();
   showPlayMsg('Place your bet');
   document.getElementById('betActionRow').style.display='flex';
+  document.getElementById('betZone').style.display='block';
   document.getElementById('nextHandRow').style.display='none';
 });
 document.getElementById('roundDealBtn').addEventListener('click', ()=>{
@@ -2610,11 +2636,7 @@ function renderBonusCard(){
   document.getElementById('bonusCard').classList.toggle('locked', !available);
 
   const hBtn = document.getElementById('holdemBonusBtn');
-  if(hBtn){
-    hBtn.disabled = !available; hBtn.textContent = available ? 'Play' : 'Done';
-    document.getElementById('holdemBonusReq').textContent = statusText;
-    document.getElementById('holdemBonusCard').classList.toggle('locked', !available);
-  }
+  if(hBtn){ hBtn.classList.toggle('tab-disabled', !available); }
 }
 
 let chipQuiz = null;
@@ -3282,8 +3304,12 @@ function awardPots(){
         if(cmp>0) best=[s]; else if(cmp===0) best.push(s);
       });
       const share=Math.floor(potAmt/best.length);
-      best.forEach(s=>{ s.chips+=share; s.won=true; });
+      best.forEach(s=>{ s.chips+=share; });
       best[0].chips += potAmt - share*best.length;
+      // Only a genuinely contested pot (2+ eligible players) is a "win"; a sole-eligible
+      // tier is just an uncalled bet being returned — it must NOT mark a winner (that caused
+      // a false chop when you bet more than an opponent could call).
+      if(eligible.length>1) best.forEach(s=>{ s.won=true; });
     }
     commits = commits.map(c=>({s:c.s, amt:c.amt-min})).filter(c=>c.amt>0);
   }
