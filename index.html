@@ -652,6 +652,42 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
     <p class="lede">A real table never shows you the count. CountJack hides it too — tap <b style="color:var(--brass)">Check Count</b> whenever you want to test yourself. Guess first, then see how close you were.</p>
     <div class="section-label">Where it actually matters</div>
     <p class="lede">Most of the time the count just shapes how much you'd bet. But one decision at the table uses it directly: <b style="color:var(--ivory)">insurance</b>. Insurance is only a fair bet when roughly a third of the remaining shoe is 10-value cards — normally the odds are against it, but at a true count of <b style="color:var(--brass)">+3 or higher</b>, there are enough tens left that taking it actually pays off. Next time the dealer shows an Ace in Play, check your count first.</p>
+
+    <div class="section-label">Basic strategy: the order of operations</div>
+    <p class="lede">Before you even think about hitting or standing, ask these in order — the first one that applies is your answer:</p>
+    <div class="glossary-term"><div class="term">1. Can I surrender?</div><div class="def">Only legal on your first two cards, before any hit. If it applies, it's almost always your best option.</div></div>
+    <div class="glossary-term"><div class="term">2. Should I split?</div><div class="def">Only when your first two cards are a pair (or two 10-value cards).</div></div>
+    <div class="glossary-term"><div class="term">3. Should I double?</div><div class="def">Only on your first two cards. If basic strategy calls for it, you're in a strong spot.</div></div>
+    <div class="glossary-term" style="margin-bottom:0;"><div class="term">4. Hit or stand?</div><div class="def">What's left once surrender, split, and double are ruled out.</div></div>
+    <p class="lede" style="margin-top:10px;">This table plays <b style="color:var(--ivory)">dealer hits soft 17 (H17)</b>, and assumes <b style="color:var(--ivory)">Double After Split</b> is allowed — the game you'll most commonly find.</p>
+
+    <div class="section-label">Late surrender</div>
+    <div class="glossary-term"><div class="term">Hard 16</div><div class="def">Surrender vs. dealer 9, 10, or Ace — except a pair of 8s, which always splits instead.</div></div>
+    <div class="glossary-term" style="margin-bottom:0;"><div class="term">Hard 15</div><div class="def">Surrender vs. dealer 10 only.</div></div>
+
+    <div class="section-label">Splitting pairs</div>
+    <div class="glossary-term"><div class="term">A,A and 8,8</div><div class="def">Always split, no matter what the dealer shows.</div></div>
+    <div class="glossary-term"><div class="term">10,10 (or any two 10-value cards)</div><div class="def">Never split — 20 is too strong to break up.</div></div>
+    <div class="glossary-term"><div class="term">9,9</div><div class="def">Split vs. 2–6 and 8–9. Stand vs. 7, 10, or Ace (18 is already good).</div></div>
+    <div class="glossary-term"><div class="term">7,7 / 6,6</div><div class="def">Split vs. dealer 2 through 7 (7,7) or 2 through 6 (6,6) — otherwise hit.</div></div>
+    <div class="glossary-term"><div class="term">4,4</div><div class="def">Split only vs. dealer 5 or 6 — otherwise hit.</div></div>
+    <div class="glossary-term"><div class="term">3,3 / 2,2</div><div class="def">Split vs. dealer 2 through 7 — otherwise hit.</div></div>
+    <div class="glossary-term" style="margin-bottom:0;"><div class="term">5,5</div><div class="def">Never split — play it as a hard 10 (double vs. 2–9, otherwise hit).</div></div>
+
+    <div class="section-label">Soft totals (an Ace counted as 11)</div>
+    <div class="glossary-term"><div class="term">Soft 19–20 (A,8 / A,9)</div><div class="def">Always stand — A,8 doubles only vs. dealer 6.</div></div>
+    <div class="glossary-term"><div class="term">Soft 18 (A,7)</div><div class="def">Double vs. 2–6, stand vs. 7–8, hit vs. 9 through Ace.</div></div>
+    <div class="glossary-term"><div class="term">Soft 17 (A,6)</div><div class="def">Double vs. 3–6, otherwise hit.</div></div>
+    <div class="glossary-term" style="margin-bottom:0;"><div class="term">Soft 13–16 (A,2 through A,5)</div><div class="def">Double vs. a narrow middle range of the dealer's card (roughly 4–6), otherwise hit.</div></div>
+
+    <div class="section-label">Hard totals</div>
+    <div class="glossary-term"><div class="term">17 and up</div><div class="def">Always stand.</div></div>
+    <div class="glossary-term"><div class="term">13–16</div><div class="def">Stand vs. dealer 2–6, otherwise hit.</div></div>
+    <div class="glossary-term"><div class="term">12</div><div class="def">Stand vs. dealer 4–6, otherwise hit.</div></div>
+    <div class="glossary-term"><div class="term">11</div><div class="def">Always double.</div></div>
+    <div class="glossary-term"><div class="term">10</div><div class="def">Double vs. dealer 2–9, otherwise hit.</div></div>
+    <div class="glossary-term"><div class="term">9</div><div class="def">Double vs. dealer 3–6, otherwise hit.</div></div>
+    <div class="glossary-term" style="margin-bottom:0;"><div class="term">8 and under</div><div class="def">Always hit.</div></div>
   </div>
 
   <!-- DRILL -->
@@ -732,6 +768,10 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
           <button class="deal" id="dealBtn" style="flex:1; border:none; border-radius:14px; font-weight:700; font-family:var(--body-face); background:var(--brass); color:var(--felt-shadow);">Deal</button>
         </div>
         <div class="hint-reco" id="bjReco" style="display:none;"></div>
+        <div class="action-row" id="playFirstDecisionRow" style="display:none; margin-bottom:8px;">
+          <button class="ghost" id="surrenderBtn">Surrender</button>
+          <button id="splitBtn">Split</button>
+        </div>
         <div class="action-row" id="playActionRow" style="display:none;">
           <button id="hitBtn">Hit</button>
           <button id="standBtn" class="stand">Stand</button>
@@ -887,7 +927,9 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
     <div class="section-label">Table terms</div>
     <div class="glossary-term"><div class="term">Hole cards</div><div class="def">The 2 private cards only you can see.</div></div>
     <div class="glossary-term"><div class="term">Flop / Turn / River</div><div class="def">The 3, then 1, then 1 shared community cards dealt face up. Everyone builds their best hand from their hole cards plus these 5.</div></div>
-    <div class="glossary-term"><div class="term">Check / Bet / Call / Fold</div><div class="def">Check passes the action with no money in. Bet puts chips in. Call matches a bet to stay in the hand. Fold gives up the hand and whatever's in the pot.</div></div>
+    <div class="glossary-term"><div class="term">Small blind / Big blind</div><div class="def">Forced bets posted before any cards are even looked at, so there's always something worth playing for. Heads-up, the button posts the small blind and the other seat posts the big blind.</div></div>
+    <div class="glossary-term"><div class="term">Check / Bet / Call / Raise / Fold</div><div class="def">Check passes the action with no money in (only if nobody's bet yet). Bet puts chips in. Call matches a bet to stay in. Raise increases it further. Fold gives up the hand and whatever's already in the pot.</div></div>
+    <div class="glossary-term"><div class="term">Limit betting</div><div class="def">Bets and raises here are a fixed size each street — a smaller "small bet" preflop and on the flop, and a bigger "big bet" on the turn and river. One raise per street, matching classic Fixed-Limit Hold'em.</div></div>
     <div class="glossary-term"><div class="term">Kicker</div><div class="def">An unpaired card that breaks a tie — e.g. a pair of Kings with an Ace kicker beats a pair of Kings with a Jack kicker.</div></div>
     <div class="glossary-term"><div class="term">The nuts</div><div class="def">The best possible hand given the current board — unbeatable at that moment.</div></div>
     <div class="glossary-term"><div class="term">Open-ended straight draw</div><div class="def">4 cards in a row, needing one more on either end to complete — 2 ranks, 8 outs. Example: holding 6-7-8-9 completes with a 5 or a 10.</div></div>
@@ -1167,38 +1209,82 @@ function handValue(cards){
   return {total, soft: aces>0 && total<=21};
 }
 
-// ---------------- simplified basic strategy (for the daily chip quiz) ----------------
+// ---------------- full basic strategy engine ----------------
+// Encodes the complete Basic Strategy chart (Blackjack Apprenticeship), in the
+// correct order of operations: Surrender -> Split -> Double -> Hit/Stand.
+// Assumes Double After Split (DAS) is offered and dealer hits soft 17 (H17).
 function rankNum(rank){
   if(rank==='A') return 11;
   if(['J','Q','K'].includes(rank)) return 10;
   return parseInt(rank,10);
 }
-// Assumes dealer stands on all 17s. No splitting — pairs are scored as hard/soft totals.
-function bestAction(playerCards, dealerCard){
+function isTenValue(rank){ return rank==='10'||rank==='J'||rank==='Q'||rank==='K'; }
+function canSplitPair(cards){
+  if(cards.length!==2) return false;
+  return cards[0].rank===cards[1].rank || (isTenValue(cards[0].rank) && isTenValue(cards[1].rank));
+}
+function dealerShouldHit(cards){
+  const v = handValue(cards);
+  if(v.total<17) return true;
+  if(v.total===17 && v.soft) return true; // H17: dealer hits soft 17
+  return false;
+}
+// opts: canSplit, canSurrender, canDouble — each only true on an eligible first decision.
+function basicStrategyFull(playerCards, dealerCard, opts){
+  opts = opts||{};
+  const canSplit = !!opts.canSplit;
+  const canSurrender = !!opts.canSurrender;
+  const canDouble = !!opts.canDouble;
   const pv = handValue(playerCards);
-  const d = rankNum(dealerCard.rank); // 2-11 (11 = Ace)
+  const isPairEligible = canSplit && canSplitPair(playerCards);
+  const d = rankNum(dealerCard.rank); // 2-11, 11=Ace
+  const isPairOfEights = isPairEligible && playerCards[0].rank==='8' && playerCards[1].rank==='8';
+
+  // 1. Surrender (8,8 is the classic exception — always split instead, never surrender)
+  if(canSurrender && !pv.soft && !isPairOfEights){
+    if(pv.total===16 && (d===9||d===10||d===11)) return 'surrender';
+    if(pv.total===15 && d===10) return 'surrender';
+  }
+  // 2. Split
+  if(isPairEligible){
+    const rank = playerCards[0].rank;
+    if(rank==='A') return 'split';
+    if(!isTenValue(rank)){
+      if(rank==='9'){ if(d!==7 && d!==10 && d!==11 && d<=9) return 'split'; }
+      else if(rank==='8') return 'split';
+      else if(rank==='7'){ if(d<=7) return 'split'; }
+      else if(rank==='6'){ if(d<=6) return 'split'; }
+      else if(rank==='4'){ if(d===5||d===6) return 'split'; }
+      else if(rank==='3'){ if(d<=7) return 'split'; }
+      else if(rank==='2'){ if(d<=7) return 'split'; }
+      // 5,5 and non-matching ranges fall through to the hard/soft total logic below
+    }
+  }
+  // 3 & 4. Double / Hit / Stand
   if(pv.soft){
     const t = pv.total;
-    if(t<=14) return (d>=5 && d<=6) ? 'double' : 'hit';
-    if(t===15||t===16) return (d>=4 && d<=6) ? 'double' : 'hit';
-    if(t===17) return (d>=3 && d<=6) ? 'double' : 'hit';
+    if(t>=20) return 'stand'; // A,9
+    if(t===19) return (canDouble && d===6) ? 'double' : 'stand'; // A,8
     if(t===18){
-      if(d>=3 && d<=6) return 'double';
-      if(d===2||d===7||d===8) return 'stand';
+      if(canDouble && d>=2 && d<=6) return 'double';
+      if(d>=2 && d<=8) return 'stand';
       return 'hit';
     }
-    return 'stand';
+    if(t===17) return (canDouble && d>=3 && d<=6) ? 'double' : 'hit';
+    if(t===16) return (canDouble && d>=4 && d<=6) ? 'double' : 'hit';
+    if(t===15) return (canDouble && d>=4 && d<=6) ? 'double' : 'hit';
+    if(t===14) return (canDouble && d>=5 && d<=6) ? 'double' : 'hit';
+    if(t===13) return (canDouble && d>=5 && d<=6) ? 'double' : 'hit';
+    return 'hit';
   } else {
     const t = pv.total;
-    if(t<=8) return 'hit';
-    if(t===9)  return (d>=3 && d<=6) ? 'double' : 'hit';
-    if(t===10) return (d>=2 && d<=9) ? 'double' : 'hit';
-    if(t===11) return 'double';
+    if(t>=17) return 'stand';
+    if(t>=13 && t<=16) return (d>=2 && d<=6) ? 'stand' : 'hit';
     if(t===12) return (d>=4 && d<=6) ? 'stand' : 'hit';
-    if(t===13||t===14) return (d>=2 && d<=6) ? 'stand' : 'hit';
-    if(t===15) return (d>=2 && d<=6) ? 'stand' : (d===10 ? 'fold' : 'hit');
-    if(t===16) return (d>=2 && d<=6) ? 'stand' : (d>=9 ? 'fold' : 'hit');
-    return 'stand';
+    if(t===11) return canDouble ? 'double' : 'hit';
+    if(t===10) return (canDouble && d>=2 && d<=9) ? 'double' : 'hit';
+    if(t===9) return (canDouble && d>=3 && d<=6) ? 'double' : 'hit';
+    return 'hit';
   }
 }
 function randomRank(){ return RANKS[Math.floor(Math.random()*RANKS.length)]; }
@@ -1836,11 +1922,7 @@ function runTableDrillRound(numPlayers){
     function step(){
       const pv = handValue(players[p]);
       if(pv.total>=21){ drillTimer=setTimeout(()=>playBotHand(p+1), drillSpeedChoice); return; }
-      let action = bestAction(players[p], dealer[0]);
-      if(players[p].length>2){
-        if(action==='double') action='hit';
-        if(action==='fold') action='stand';
-      }
+      const action = basicStrategyFull(players[p], dealer[0], {canSplit:false, canSurrender:false, canDouble: players[p].length===2});
       if(action==='hit' || action==='double'){
         dealTo(players[p], 'tdPlayerCards'+p, false);
         refreshTotals();
@@ -1865,8 +1947,7 @@ function runTableDrillRound(numPlayers){
     drillTimer = setTimeout(dealerPlayStep, drillSpeedChoice);
   }
   function dealerPlayStep(){
-    const dv = handValue(dealer);
-    if(dv.total<17){
+    if(dealerShouldHit(dealer)){
       dealTo(dealer, 'tdDealerCards', false);
       refreshTotals();
       drillTimer = setTimeout(dealerPlayStep, drillSpeedChoice);
@@ -1935,6 +2016,9 @@ let dealerHand = [];
 let inRound = false;
 let dealerHoleHidden = true;
 let pendingInsuranceDelta = 0;
+let splitHandsData = null; // null, or [{cards, bet, isAces}, {cards, bet, isAces}] after a split
+let activeSplitIndex = 0;
+let hasActedThisHand = false; // surrender/split are only legal before any other action
 
 const PLAY_MODE_OPTS = [
   {id:'casual', label:'Just Play'},
@@ -1987,6 +2071,8 @@ function resetTableVisual(){
   document.getElementById('playerCards').innerHTML='';
   document.getElementById('dealerTotal').textContent='';
   document.getElementById('playerTotal').textContent='';
+  splitHandsData = null;
+  activeSplitIndex = 0;
 }
 function showPlayMsg(text){
   const el = document.getElementById('playMsg');
@@ -2078,6 +2164,7 @@ function beginRound(){
   playerHand=[]; dealerHand=[];
   dealerHoleHidden = true;
   pendingInsuranceDelta = 0;
+  hasActedThisHand = false;
   document.getElementById('insuranceRow').style.display='none';
   document.getElementById('betActionRow').style.display='none';
   document.getElementById('playActionRow').style.display='flex';
@@ -2103,10 +2190,17 @@ function beginRound(){
       setTimeout(dealNext, 180);
     } else {
       document.getElementById('doubleBtn').disabled = (progress.bankroll < bet*2);
+      updateFirstDecisionRowVisibility();
       checkForPeekAndInsurance();
     }
   }
   dealNext();
+}
+function updateFirstDecisionRowVisibility(){
+  const eligible = inRound && !hasActedThisHand && !splitHandsData && playerHand.length===2;
+  document.getElementById('playFirstDecisionRow').style.display = eligible ? 'flex' : 'none';
+  document.getElementById('splitBtn').style.display = (eligible && canSplitPair(playerHand)) ? 'block' : 'none';
+  document.getElementById('surrenderBtn').style.display = eligible ? 'block' : 'none';
 }
 // Real casino dealers only ever look at the hole card when the up card could complete a
 // blackjack (Ace or a 10-value) — so that's the only time we check it here too.
@@ -2119,6 +2213,7 @@ function checkForPeekAndInsurance(){
     if(dv.total===21){
       revealHole();
       showPlayMsg('Dealer has blackjack');
+      document.getElementById('playFirstDecisionRow').style.display='none';
       setTimeout(resolveRound, 500);
       return;
     }
@@ -2129,6 +2224,7 @@ function checkForPeekAndInsurance(){
 }
 function offerInsurance(){
   document.getElementById('playActionRow').style.display='none';
+  document.getElementById('playFirstDecisionRow').style.display='none';
   document.getElementById('insuranceRow').style.display='flex';
   showPlayMsg('Dealer shows an Ace — insurance?');
 }
@@ -2146,6 +2242,7 @@ function resolveInsurance(taken){
     setTimeout(resolveRound, 700);
   } else {
     if(taken) showPlayMsg('No blackjack — insurance lost');
+    updateFirstDecisionRowVisibility();
     afterPeekPhase();
   }
 }
@@ -2154,6 +2251,7 @@ document.getElementById('insuranceNoBtn').addEventListener('click', ()=>resolveI
 function afterPeekPhase(){
   const pv = handValue(playerHand);
   if(pv.total===21){
+    document.getElementById('playFirstDecisionRow').style.display='none';
     revealHole();
     setTimeout(resolveRound, 500);
   }
@@ -2162,6 +2260,80 @@ document.getElementById('dealBtn').addEventListener('click', ()=>{
   if(bet < playCity.minBet || bet>progress.bankroll) return;
   beginRound();
 });
+
+function canAffordSplit(){
+  return progress.bankroll >= bet*2;
+}
+document.getElementById('splitBtn').addEventListener('click', ()=>{
+  if(!inRound || hasActedThisHand || splitHandsData) return;
+  if(!canSplitPair(playerHand)) return;
+  if(!canAffordSplit()) return;
+  hasActedThisHand = true;
+  document.getElementById('playFirstDecisionRow').style.display='none';
+  document.getElementById('playActionRow').style.display='none';
+
+  const isAces = playerHand[0].rank==='A';
+  splitHandsData = [
+    { cards:[playerHand[0]], bet: bet, isAces },
+    { cards:[playerHand[1]], bet: bet, isAces },
+  ];
+  activeSplitIndex = 0;
+  playCardSound();
+  showPlayMsg('Split — playing hand 1 of 2');
+  dealToActiveSplitHand(afterSplitCardDealt);
+});
+document.getElementById('surrenderBtn').addEventListener('click', ()=>{
+  if(!inRound || hasActedThisHand || splitHandsData) return;
+  hasActedThisHand = true;
+  inRound = false;
+  document.getElementById('playFirstDecisionRow').style.display='none';
+  document.getElementById('playActionRow').style.display='none';
+  const surrenderDelta = -Math.round(bet/2);
+  progress.bankroll += surrenderDelta + pendingInsuranceDelta;
+  pendingInsuranceDelta = 0;
+  progress.handsByCity[playCity.id] = (progress.handsByCity[playCity.id]||0)+1;
+  saveProgress();
+  showPlayMsg('Surrendered ('+money(surrenderDelta)+')');
+  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+  document.getElementById('nextHandRow').style.display='flex';
+  checkBankrollFloor();
+});
+function dealToActiveSplitHand(cb){
+  const hand = splitHandsData[activeSplitIndex];
+  const card = drawCard(playShoe);
+  hand.cards.push(card);
+  document.getElementById('playerCards').innerHTML='';
+  hand.cards.forEach(c=>document.getElementById('playerCards').appendChild(cardEl(c,false)));
+  playCardSound();
+  updateShoeGauge('play', playShoe);
+  const pv = handValue(hand.cards);
+  document.getElementById('playerTotal').textContent = pv.total + (pv.soft?' (soft)':'');
+  if(cb) setTimeout(cb, 200);
+}
+function afterSplitCardDealt(){
+  const hand = splitHandsData[activeSplitIndex];
+  playerHand = hand.cards; // hit/stand/double keep operating on `playerHand` as normal
+  bet = hand.bet;
+  updateBetDisplay();
+  if(hand.isAces){
+    // standard rule: split aces get exactly one card each, then automatically stand
+    advanceSplitOrFinish();
+    return;
+  }
+  document.getElementById('doubleBtn').disabled = (progress.bankroll < bet*2);
+  document.getElementById('playActionRow').style.display='flex';
+}
+function advanceSplitOrFinish(){
+  if(activeSplitIndex < splitHandsData.length-1){
+    activeSplitIndex++;
+    showPlayMsg('Playing hand '+(activeSplitIndex+1)+' of '+splitHandsData.length);
+    dealToActiveSplitHand(afterSplitCardDealt);
+  } else {
+    document.getElementById('playActionRow').style.display='none';
+    revealHole();
+    dealerPlay();
+  }
+}
 
 function updateHandTotals(){
   const pv = handValue(playerHand);
@@ -2177,13 +2349,19 @@ function updateHandTotals(){
 
 document.getElementById('hitBtn').addEventListener('click', ()=>{
   if(!inRound) return;
+  hasActedThisHand = true;
+  document.getElementById('playFirstDecisionRow').style.display='none';
   dealCardTo(playerHand,'playerCards',false);
   document.getElementById('doubleBtn').disabled = true; // double is only legal on the first two cards
   updateHandTotals();
   const pv = handValue(playerHand);
   if(pv.total>21){
-    revealHole();
-    setTimeout(resolveRound, 400);
+    if(splitHandsData){
+      advanceSplitOrFinish();
+    } else {
+      revealHole();
+      setTimeout(resolveRound, 400);
+    }
   } else if(pv.total===21){
     standAction();
   }
@@ -2192,20 +2370,33 @@ document.getElementById('doubleBtn').addEventListener('click', ()=>{
   if(!inRound) return;
   if(playerHand.length!==2) return; // double is only legal on the first two cards
   if(progress.bankroll < bet*2) return;
+  hasActedThisHand = true;
+  document.getElementById('playFirstDecisionRow').style.display='none';
   bet = bet*2;
+  if(splitHandsData) splitHandsData[activeSplitIndex].bet = bet;
   updateBetDisplay();
   dealCardTo(playerHand,'playerCards',false);
   updateHandTotals();
   const pv = handValue(playerHand);
-  if(pv.total>21){ revealHole(); setTimeout(resolveRound,400); }
-  else { standAction(); }
+  if(pv.total>21){
+    if(splitHandsData){ advanceSplitOrFinish(); }
+    else { revealHole(); setTimeout(resolveRound,400); }
+  } else {
+    standAction();
+  }
 });
 document.getElementById('standBtn').addEventListener('click', standAction);
 
 function standAction(){
   if(!inRound) return;
-  revealHole();
-  dealerPlay();
+  hasActedThisHand = true;
+  document.getElementById('playFirstDecisionRow').style.display='none';
+  if(splitHandsData){
+    advanceSplitOrFinish();
+  } else {
+    revealHole();
+    dealerPlay();
+  }
 }
 function revealHole(){
   dealerHoleHidden=false;
@@ -2215,11 +2406,15 @@ function revealHole(){
   updateHandTotals();
 }
 function dealerPlay(){
-  const pv = handValue(playerHand);
-  if(pv.total>21){ setTimeout(resolveRound,300); return; }
+  if(splitHandsData){
+    const allBusted = splitHandsData.every(h=>handValue(h.cards).total>21);
+    if(allBusted){ setTimeout(resolveRound,300); return; }
+  } else {
+    const pv = handValue(playerHand);
+    if(pv.total>21){ setTimeout(resolveRound,300); return; }
+  }
   function step(){
-    const dv = handValue(dealerHand);
-    if(dv.total<17){
+    if(dealerShouldHit(dealerHand)){
       dealCardTo(dealerHand,'dealerCards',false);
       updateHandTotals();
       setTimeout(step, 500);
@@ -2229,35 +2424,7 @@ function dealerPlay(){
   }
   setTimeout(step, 400);
 }
-function resolveRound(){
-  inRound = false;
-  const pv = handValue(playerHand);
-  const dv = handValue(dealerHand);
-  let outcome, delta;
-  const playerBJ = pv.total===21 && playerHand.length===2;
-  const dealerBJ = dv.total===21 && dealerHand.length===2;
-  if(pv.total>21){ outcome='Bust — you lose'; delta=-bet; }
-  else if(dealerBJ && playerBJ){ outcome='Push'; delta=0; }
-  else if(playerBJ){ outcome='Blackjack! You win'; delta = Math.round(bet*1.5); }
-  else if(dealerBJ){ outcome='Dealer blackjack — you lose'; delta=-bet; }
-  else if(dv.total>21){ outcome='Dealer busts — you win'; delta=bet; }
-  else if(pv.total>dv.total){ outcome='You win'; delta=bet; }
-  else if(pv.total<dv.total){ outcome='Dealer wins'; delta=-bet; }
-  else { outcome='Push'; delta=0; }
-
-  delta += pendingInsuranceDelta;
-  pendingInsuranceDelta = 0;
-
-  progress.bankroll += delta;
-  progress.handsByCity[playCity.id] = (progress.handsByCity[playCity.id]||0)+1;
-  saveProgress();
-
-  showPlayMsg(outcome + (delta!==0 ? ' ('+(delta>0?'+':'')+money(delta)+')' : ''));
-  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
-  document.getElementById('playActionRow').style.display='none';
-  document.getElementById('nextHandRow').style.display='flex';
-  updatePlayHints();
-
+function checkBankrollFloor(){
   if(progress.bankroll < playCity.minBet){
     setTimeout(()=>{
       const stake = Math.max(1000, playCity.minBet*20);
@@ -2267,6 +2434,55 @@ function resolveRound(){
       document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
     }, 1200);
   }
+}
+function resolveRound(){
+  inRound = false;
+  const dv = handValue(dealerHand);
+  let totalDelta = 0;
+  let outcome;
+
+  if(splitHandsData){
+    const dealerBJ = false; // a 21 after a split is just 21, never a paying "natural" blackjack
+    const parts = splitHandsData.map((hand, idx)=>{
+      const pv = handValue(hand.cards);
+      let delta;
+      if(pv.total>21){ delta=-hand.bet; }
+      else if(dv.total>21){ delta=hand.bet; }
+      else if(pv.total>dv.total){ delta=hand.bet; }
+      else if(pv.total<dv.total){ delta=-hand.bet; }
+      else { delta=0; }
+      totalDelta += delta;
+      const label = pv.total>21 ? 'bust' : (delta>0?'win':delta<0?'lose':'push');
+      return 'Hand '+(idx+1)+' '+label;
+    });
+    outcome = parts.join(' · ');
+  } else {
+    const pv = handValue(playerHand);
+    const playerBJ = pv.total===21 && playerHand.length===2;
+    const dealerBJ = dv.total===21 && dealerHand.length===2;
+    if(pv.total>21){ outcome='Bust — you lose'; totalDelta=-bet; }
+    else if(dealerBJ && playerBJ){ outcome='Push'; totalDelta=0; }
+    else if(playerBJ){ outcome='Blackjack! You win'; totalDelta = Math.round(bet*1.5); }
+    else if(dealerBJ){ outcome='Dealer blackjack — you lose'; totalDelta=-bet; }
+    else if(dv.total>21){ outcome='Dealer busts — you win'; totalDelta=bet; }
+    else if(pv.total>dv.total){ outcome='You win'; totalDelta=bet; }
+    else if(pv.total<dv.total){ outcome='Dealer wins'; totalDelta=-bet; }
+    else { outcome='Push'; totalDelta=0; }
+  }
+
+  totalDelta += pendingInsuranceDelta;
+  pendingInsuranceDelta = 0;
+
+  progress.bankroll += totalDelta;
+  progress.handsByCity[playCity.id] = (progress.handsByCity[playCity.id]||0)+1;
+  saveProgress();
+
+  showPlayMsg(outcome + (totalDelta!==0 ? ' ('+(totalDelta>0?'+':'')+money(totalDelta)+')' : ''));
+  document.getElementById('bankrollDisplay').textContent = money(progress.bankroll);
+  document.getElementById('playActionRow').style.display='none';
+  document.getElementById('nextHandRow').style.display='flex';
+  updatePlayHints();
+  checkBankrollFloor();
 }
 document.getElementById('roundClearBtn').addEventListener('click', ()=>{
   bet = playCity.minBet;
@@ -2337,11 +2553,17 @@ function openChipQuiz(){
 function openBlackjackQuiz(){
   document.getElementById('chipStep1').style.display='block';
   document.getElementById('chipStep1Poker').style.display='none';
-  // Deal from a real shuffled single deck so no impossible duplicate cards appear.
-  const quizDeck = buildShoe(1);
-  const playerCards = [quizDeck.pop(), quizDeck.pop()];
-  const dealerCard = quizDeck.pop();
-  const answer = bestAction(playerCards, dealerCard);
+  // Deal from a real shuffled single deck so no impossible duplicate cards appear,
+  // and reroll pairs (Split isn't one of the quiz's Hit/Stand/Double/Fold buttons).
+  let playerCards, dealerCard, attempts = 0;
+  do {
+    const qd = buildShoe(1);
+    playerCards = [qd.pop(), qd.pop()];
+    dealerCard = qd.pop();
+    attempts++;
+  } while(canSplitPair(playerCards) && attempts<15);
+  const rawAnswer = basicStrategyFull(playerCards, dealerCard, {canSplit:false, canSurrender:true, canDouble:true});
+  const answer = rawAnswer==='surrender' ? 'fold' : rawAnswer;
   chipQuiz = { playerCards, dealerCard, answer };
 
   const dWrap = document.getElementById('chipDealerCards');
@@ -2513,10 +2735,11 @@ function updatePlayHints(){
   if(reco){
     const showing = document.getElementById('playActionRow').style.display!=='none';
     if(progress.hintsEnabled && showing && inRound && playerHand.length && dealerHand.length){
-      let a = bestAction(playerHand, dealerHand[0]);
-      if(a==='fold') a='hit';                            // no surrender in Play
-      if(a==='double' && playerHand.length>2) a='hit';   // Double only on the first two cards
-      const labels={hit:'Hit', stand:'Stand', double:'Double'};
+      const first2 = playerHand.length===2;
+      const isPair = first2 && (typeof canSplitPair==='function') && canSplitPair(playerHand);
+      let a = basicStrategyFull(playerHand, dealerHand[0], {canSplit:isPair, canSurrender:first2, canDouble:first2});
+      if(a==='double' && !first2) a='hit';
+      const labels={hit:'Hit', stand:'Stand', double:'Double', split:'Split', surrender:'Surrender'};
       reco.textContent = 'Basic strategy: '+(labels[a]||'Hit');
       reco.style.display='block';
     } else reco.style.display='none';
@@ -2544,11 +2767,14 @@ function applyHints(){
 }
 
 // ================= HOLD'EM GAME =================
+// Real heads-up Fixed-Limit Hold'em: small blind / big blind, small bet on
+// preflop+flop, big bet (double) on turn+river, one raise allowed per street.
 let holdemInitialized = false;
 let hDeck = [], hBoard = [];
 let hPot = 0;
 let hStreet = 'preflop';
 let hHandActive = false;
+let hPlayerTurnActive = false;
 let hLastEquity = null;
 // ---- 4-handed ring state (you + 3 bots) ----
 const HSEATS = 4;
@@ -2577,6 +2803,13 @@ const DEALER_POS = {
   2:{ top:'70px', left:'calc(50% + 44px)' },
   3:{ top:'32%', left:'96px' }
 };
+
+// per-street betting state
+let hStreetBet = 0;
+let hStreetPut = { player: 0, challenger: 0 };
+let hRaiseCount = 0;
+let hActed = { player: false, challenger: false };
+let hBetUnit = 20;
 
 function shuffleDeck(deck){
   for(let i=deck.length-1;i>0;i--){
