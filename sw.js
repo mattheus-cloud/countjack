@@ -1,5 +1,5 @@
 /* CountJack service worker — precache the app shell for full offline use. */
-const CACHE = 'countjack-v9';
+const CACHE = 'countjack-v10';
 const ASSETS = [
   './',
   './index.html',

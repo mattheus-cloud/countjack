@@ -513,6 +513,15 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
 .blind-tag{ font-family:var(--mono-face); font-variant-numeric:tabular-nums; font-size:10px; color:var(--ivory-dim); letter-spacing:.03em; }
 .count-readout{ font-family:var(--mono-face); font-variant-numeric:tabular-nums; font-size:11px; font-weight:700; color:var(--brass); margin-top:3px; text-align:right; }
 .hint-reco{ text-align:center; font-size:12.5px; font-weight:700; color:var(--brass); margin:2px 0 8px; }
+.other-seats{ display:flex; justify-content:center; gap:20px; margin-bottom:6px; min-height:52px; }
+.oseat{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.oseat .olabel{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--ivory-dim); font-weight:600; }
+.oseat .cards{ display:flex; }
+.oseat .cards .card{ width:28px; height:40px; font-size:10px; padding:2px 3px; margin-left:-9px; }
+.oseat .cards .card:first-child{ margin-left:0; }
+.oseat .ototal{ font-family:var(--mono-face); font-variant-numeric:tabular-nums; font-size:10.5px; color:var(--brass); }
+.oseat .ores{ font-size:10px; font-weight:700; min-height:12px; }
+.oseat .ores.win{ color:#8fd6a5; } .oseat .ores.lose{ color:#e79b9b; } .oseat .ores.push{ color:var(--ivory-dim); }
 
 .pk-seat{ position:absolute; display:flex; flex-direction:column; align-items:center; gap:2px; width:100px; z-index:2; transition:opacity .25s; }
 .pk-seat.pk-folded{ opacity:.36; }
@@ -605,6 +614,7 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
     </div>
     <div class="topbar-right">
       <div class="bankroll" id="bankrollDisplay">$1,000</div>
+      <button class="gear-btn" id="helperBtn" aria-label="Table Coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 20.5l1.5-5.1A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></svg></button>
       <button class="gear-btn" id="settingsBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8M18.7 18.7l-1.8-1.8M7.1 7.1 5.3 5.3"/></svg></button>
     </div>
   </div>
@@ -743,6 +753,7 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
           <div class="hand-total" id="dealerTotal"></div>
         </div>
         <div style="flex:1;"></div>
+        <div class="other-seats" id="otherSeats"></div>
         <div class="hand-row">
           <div class="hand-label">You</div>
           <div class="cards" id="playerCards"></div>
@@ -840,7 +851,8 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
     </div>
     <div class="topbar-right">
       <div class="bankroll" id="holdemChipsDisplay">$1,000</div>
-      <button class="gear-btn" id="settingsBtnHoldem" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8M18.7 18.7l-1.8-1.8M7.1 7.1 5.3 5.3"/></svg></button>
+      <button class="gear-btn" id="helperBtnHoldem" aria-label="Table Coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L3 20.5l1.5-5.1A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></svg></button>
+      <button class="gear-btn" id="settingsBtnHoldem" aria-label="Table Coach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M21.5 12h-2.6M5.1 12H2.5M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8M18.7 18.7l-1.8-1.8M7.1 7.1 5.3 5.3"/></svg></button>
     </div>
   </div>
 
@@ -1062,6 +1074,16 @@ p.lede{ color: var(--ivory-dim); font-size:14.5px; line-height:1.55; margin: 4px
       </label>
     </div>
     <button class="btn-main" id="closeSettingsBtn">Done</button>
+  </div>
+</div>
+
+<!-- Table Coach (Helper) sheet -->
+<div class="modal-veil" id="helperModal">
+  <div class="modal">
+    <h3 id="helperTitle">Table Coach</h3>
+    <p id="helperIntro"></p>
+    <div id="helperBody"></div>
+    <button class="btn-main" id="closeHelperBtn">Got it</button>
   </div>
 </div>
 
@@ -2071,6 +2093,8 @@ function resetTableVisual(){
   document.getElementById('playerCards').innerHTML='';
   document.getElementById('dealerTotal').textContent='';
   document.getElementById('playerTotal').textContent='';
+  const os=document.getElementById('otherSeats'); if(os) os.innerHTML='';
+  otherHands=[[],[]];
   splitHandsData = null;
   activeSplitIndex = 0;
 }
@@ -2158,9 +2182,65 @@ function cityPenetration(){
   return playCity.decks<=1 ? 0.65 : playCity.decks<=2 ? 0.7 : 0.78;
 }
 
+// ---- other players at the table (atmosphere + they deplete the shoe, so the count is real) ----
+const OTHER_SEATS = 2;
+let otherHands = [[], []];
+function buildOtherSeats(){
+  const wrap=document.getElementById('otherSeats'); if(!wrap) return;
+  wrap.innerHTML='';
+  const labels=['Seat 1','Seat 3'];
+  for(let i=0;i<OTHER_SEATS;i++){
+    const s=document.createElement('div'); s.className='oseat';
+    s.innerHTML='<div class="olabel">'+labels[i]+'</div><div class="cards" id="oCards'+i+'"></div>'+
+                '<div class="ototal" id="oTotal'+i+'"></div><div class="ores" id="oRes'+i+'"></div>';
+    wrap.appendChild(s);
+  }
+}
+function renderOtherSeat(i){
+  const cw=document.getElementById('oCards'+i); if(!cw) return;
+  cw.innerHTML='';
+  otherHands[i].forEach(c=>cw.appendChild(cardEl(c,false)));
+  const pv=handValue(otherHands[i]);
+  const t=document.getElementById('oTotal'+i);
+  if(t) t.textContent = otherHands[i].length ? (pv.total + (pv.soft?' (soft)':'')) : '';
+}
+function dealOtherPlayers(){
+  otherHands=[[],[]];
+  for(let i=0;i<OTHER_SEATS;i++){
+    otherHands[i].push(drawCard(playShoe));
+    otherHands[i].push(drawCard(playShoe));
+    let guard=0;
+    while(guard++<9){
+      const pv=handValue(otherHands[i]);
+      if(pv.total>=21) break;
+      const a=basicStrategyFull(otherHands[i], dealerHand[0], {canSplit:false, canSurrender:false, canDouble:false});
+      if(a==='hit'||a==='double') otherHands[i].push(drawCard(playShoe));
+      else break;
+    }
+    renderOtherSeat(i);
+  }
+  updateShoeGauge('play', playShoe);
+  updatePlayHints();   // their cards moved the count
+}
+function resolveOtherPlayers(){
+  const dv=handValue(dealerHand);
+  for(let i=0;i<OTHER_SEATS;i++){
+    if(!otherHands[i].length) continue;
+    const res=document.getElementById('oRes'+i); if(!res) continue;
+    const pv=handValue(otherHands[i]);
+    let r,cls;
+    if(pv.total>21){ r='Bust'; cls='lose'; }
+    else if(dv.total>21){ r='Win'; cls='win'; }
+    else if(pv.total>dv.total){ r='Win'; cls='win'; }
+    else if(pv.total<dv.total){ r='Lose'; cls='lose'; }
+    else { r='Push'; cls='push'; }
+    res.textContent=r; res.className='ores '+cls;
+  }
+}
 function beginRound(){
   inRound = true;
   resetTableVisual();
+  buildOtherSeats();
   playerHand=[]; dealerHand=[];
   dealerHoleHidden = true;
   pendingInsuranceDelta = 0;
@@ -2189,6 +2269,7 @@ function beginRound(){
       updateHandTotals();
       setTimeout(dealNext, 180);
     } else {
+      dealOtherPlayers();   // the two other seats play their hands from the same shoe
       document.getElementById('doubleBtn').disabled = (progress.bankroll < bet*2);
       updateFirstDecisionRowVisibility();
       checkForPeekAndInsurance();
@@ -2437,6 +2518,7 @@ function checkBankrollFloor(){
 }
 function resolveRound(){
   inRound = false;
+  resolveOtherPlayers();
   const dv = handValue(dealerHand);
   let totalDelta = 0;
   let outcome;
@@ -2702,6 +2784,43 @@ function openSettings(){
   renderProSection();
   document.getElementById('settingsModal').classList.add('show');
 }
+// ---- Table Coach (Helper) ----
+const HELPER_CONTENT = {
+  blackjack: {
+    intro: "Beat the dealer's hand without going over 21. Here's how this table plays and how to think about each decision.",
+    body:
+      '<div class="section-label">How this table plays</div>'+
+      '<p class="lede">Dealer <b>hits soft 17</b>. Blackjack pays <b>3:2</b>. Double on any first two cards; <b>double after split</b> is allowed. Split any pair (or two 10-values) — but <b>no re-splitting</b>, and <b>split Aces get one card</b>. <b>Surrender</b> is offered on your first decision only. The dealer <b>peeks</b> on an Ace or ten, and <b>insurance</b> is offered when the dealer shows an Ace.</p>'+
+      '<div class="section-label">Decide in this order</div>'+
+      '<p class="lede"><b>1.</b> Surrender? &nbsp; <b>2.</b> Split? &nbsp; <b>3.</b> Double? &nbsp; <b>4.</b> Hit or stand. Each of the first three is only available on your first two cards.</p>'+
+      '<div class="section-label">Counting (Hi-Lo)</div>'+
+      '<p class="lede">2–6 = <b>+1</b>, 7–9 = <b>0</b>, 10·J·Q·K·A = <b>−1</b>. Keep a running total; <b>true count</b> = running ÷ decks left. A true count of <b>+3 or more</b> is when insurance actually becomes a good bet.</p>'+
+      '<div class="callout">Turn on <b>Hints</b> (⚙) to see the live count and the recommended play. Use <b>Drill</b> for pure counting reps and <b>Check Count</b> to test yourself.</div>'
+  },
+  holdem: {
+    intro: "Make the best 5-card hand from your 2 hole cards + 5 community cards — or get everyone else to fold. You're 4-handed against Joel, Wes, and Phil.",
+    body:
+      '<div class="section-label">How this table plays</div>'+
+      '<p class="lede">4 seats, blinds rotate each hand and <b>rise over time</b> (Lvl shown by the pot). Betting is no-limit style: <b>check, call, raise, or fold</b>; the felt tracks side pots when someone is all-in. Flop, turn, river, then showdown.</p>'+
+      '<div class="section-label">Hand rankings — best to worst</div>'+
+      '<p class="lede">Royal Flush · Straight Flush · Four of a Kind · Full House · Flush · Straight · Three of a Kind · Two Pair · Pair · High Card.</p>'+
+      '<div class="section-label">How to think</div>'+
+      '<p class="lede">Play big pairs and big/suited cards; fold weak, disconnected ones. Watch the <b>Hand strength</b> meter move after each card — ask <i>why</i> it changed. Acting later (in position) is a real edge. A posted blind is already in the pot — only continue when it’s profitable from here.</p>'+
+      '<div class="callout">With <b>Hints</b> on (⚙), the win-chance meter and a <b>Recommended</b> action mirror solid play — a live coach until you turn it off to test yourself.</div>'
+  }
+};
+function openHelper(){
+  const mode = (progress.appMode==='holdem') ? 'holdem' : 'blackjack';
+  const c = HELPER_CONTENT[mode];
+  document.getElementById('helperTitle').textContent = 'Table Coach · ' + (mode==='holdem'?"Hold'em":'Blackjack');
+  document.getElementById('helperIntro').textContent = c.intro;
+  document.getElementById('helperBody').innerHTML = c.body;
+  document.getElementById('helperModal').classList.add('show');
+}
+document.getElementById('helperBtn').addEventListener('click', openHelper);
+document.getElementById('helperBtnHoldem').addEventListener('click', openHelper);
+document.getElementById('closeHelperBtn').addEventListener('click', ()=>{ document.getElementById('helperModal').classList.remove('show'); });
+document.getElementById('helperModal').addEventListener('click', (e)=>{ if(e.target.id==='helperModal') document.getElementById('helperModal').classList.remove('show'); });
 document.getElementById('settingsBtn').addEventListener('click', openSettings);
 document.getElementById('adUpgradeBtn').addEventListener('click', openSettings);
 document.getElementById('closeSettingsBtn').addEventListener('click', ()=>{
